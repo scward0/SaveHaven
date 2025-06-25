@@ -2,4 +2,27 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <!-- Primary Colors -->
+    <color name="primary">#1976D2</color>
+    <color name="primary_light">#E3F2FD</color>
+    <color name="primary_dark">#0D47A1</color>
+
+    <!-- Success Colors (for income/savings) -->
+    <color name="success">#4CAF50</color>
+    <color name="success_light">#E8F5E8</color>
+    <color name="success_dark">#2E7D32</color>
+
+    <!-- Error Colors (for expenses/warnings) -->
+    <color name="error">#F44336</color>
+    <color name="error_light">#FFEBEE</color>
+    <color name="error_dark">#C62828</color>
+
+    <!-- Surface Colors -->
+    <color name="surface">#FFFFFF</color>
+    <color name="on_surface">#212121</color>
+    <color name="on_surface_variant">#757575</color>
+
+    <!-- Background Colors -->
+    <color name="background">#FAFAFA</color>
 </resources>

@@ -33,6 +33,14 @@
         <activity
             android:name=".ui.PasswordResetActivity"
             android:exported="false" />
+        <activity
+            android:name=".ui.AddTransactionActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.DashboardActivity" />
+        <activity
+            android:name=".ui.EditTransactionActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.TransactionHistoryActivity" />
         <meta-data
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyDdLuaDX9kPOMJX-3H3XaNs6COK3FMGBdg" />

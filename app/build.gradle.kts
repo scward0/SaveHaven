@@ -60,4 +60,7 @@ dependencies {
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
 
+    // pie chart plugin
+    implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
+
 }

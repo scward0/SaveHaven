@@ -49,8 +49,7 @@ class TransactionRepository {
 
         Log.d(TAG, "Making Firestore query for userId: $userId")
 
-        // FIXED: Remove orderBy to avoid Firestore index requirement
-        // We'll sort the results in the app instead
+
         db.collection("transactions")
             .whereEqualTo("userId", userId)
             .get()
@@ -113,3 +112,4 @@ class TransactionRepository {
             }
     }
 }
+

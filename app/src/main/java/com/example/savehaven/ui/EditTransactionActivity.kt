@@ -39,6 +39,10 @@ class EditTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+
+        binding.btnBack.setOnClickListener { finish() }
+
+
         // Transaction type toggle
         binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {

@@ -41,6 +41,10 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
+
+        binding.btnBack.setOnClickListener { finish() }
+
+
         // Transaction type toggle
         binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
@@ -58,6 +62,8 @@ class AddTransactionActivity : AppCompatActivity() {
         binding.btnAddTransaction.setOnClickListener {
             addTransaction()
         }
+
+
     }
 
     private fun updateCategoryDropdown() {

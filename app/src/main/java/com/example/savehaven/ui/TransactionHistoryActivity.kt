@@ -50,6 +50,8 @@ class TransactionHistoryActivity : AppCompatActivity() {
         btnFilter = findViewById(R.id.btnFilter)
         btnClearFilters = findViewById(R.id.btnClearFilters)
         tvNoTransactions = findViewById(R.id.tvNoTransactions)
+
+        findViewById<ImageButton>(R.id.btnBack).setOnClickListener { finish() }
     }
 
     private fun setupRecyclerView() {
@@ -203,10 +205,6 @@ class TransactionHistoryActivity : AppCompatActivity() {
         startActivity(intent)
     }
 
-//    private fun editTransaction(transaction: Transaction) {
-//        // TODO: Create EditTransactionActivity
-//        Toast.makeText(this, "Edit feature coming soon!", Toast.LENGTH_SHORT).show()
-//    }
 
     override fun onResume() {
         super.onResume()

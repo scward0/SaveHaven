@@ -148,6 +148,16 @@ class DashboardActivity : AppCompatActivity() {
         binding.btnLogout.setOnClickListener {
             logout()
         }
+
+        binding.cardIncome.setOnClickListener {
+            val intent = Intent(this, IncomeActivity::class.java)
+            startActivity(intent)
+        }
+
+        binding.cardExpenses.setOnClickListener {
+            val intent = Intent(this, ExpenseActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     private fun showDefaultState() {

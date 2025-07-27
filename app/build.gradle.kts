@@ -1,8 +1,9 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("com.google.gms.google-services")
 }
+
+apply(plugin = "com.google.gms.google-services")
 
 android {
     namespace = "com.example.savehaven"
@@ -59,6 +60,10 @@ dependencies {
     // Add these Firebase dependencies:
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
+
+    //maps dependencies
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.gms:play-services-location:21.0.1")
 
     // pie chart plugin
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")

@@ -2,6 +2,7 @@ package com.example.savehaven.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -10,16 +11,26 @@ import com.example.savehaven.data.TransactionRepository
 import com.example.savehaven.data.TransactionType
 import com.example.savehaven.databinding.ActivityDashboardBinding
 import com.example.savehaven.utils.PreferenceHelper
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.GoogleMap
+import com.google.android.gms.maps.MapView
+import com.google.android.gms.maps.OnMapReadyCallback
+import com.google.android.gms.maps.model.LatLng
+import com.google.android.gms.maps.model.MarkerOptions
 import com.google.firebase.auth.FirebaseAuth
 import java.text.NumberFormat
 import java.util.*
 
-class DashboardActivity : AppCompatActivity() {
+class DashboardActivity : AppCompatActivity(), OnMapReadyCallback {
 
     private lateinit var binding: ActivityDashboardBinding
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var preferenceHelper: PreferenceHelper
     private lateinit var recentTransactionsAdapter: DashboardTransactionAdapter
+
+    // ✅ Step 2: Declare map-related properties
+    private lateinit var mapView: MapView
+    private lateinit var googleMap: GoogleMap
 
     private val numberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
@@ -28,6 +39,11 @@ class DashboardActivity : AppCompatActivity() {
 
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
+
+        // ✅ Step 3: Initialize mapView
+        mapView = binding.mapView
+        mapView.onCreate(savedInstanceState)
+        mapView.getMapAsync(this)
 
         // Initialize dependencies
         transactionRepository = TransactionRepository()
@@ -43,7 +59,18 @@ class DashboardActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        mapView.onResume()
         loadData()
+    }
+
+    // ✅ Step 5: Configure what to do when map is ready
+    override fun onMapReady(map: GoogleMap) {
+        googleMap = map
+        Log.d("DashboardActivity", "Map is ready")
+
+        val exampleLatLng = LatLng(40.7128, -74.0060) // New York
+        googleMap.addMarker(MarkerOptions().position(exampleLatLng).title("Example Location"))
+        googleMap.moveCamera(CameraUpdateFactory.newLatLngZoom(exampleLatLng, 12f))
     }
 
     private fun loadData() {

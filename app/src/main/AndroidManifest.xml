@@ -53,6 +53,10 @@
             android:name=".ui.ExpenseActivity"
             android:exported="false"
             android:parentActivityName=".ui.DashboardActivity" />
+        <activity
+            android:name=".ui.PreferencesActivity"
+            android:exported="false"
+            android:parentActivityName=".ui.DashboardActivity" />
 
 
         <meta-data

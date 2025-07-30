@@ -3,13 +3,13 @@ package com.example.savehaven.ui
 import android.content.Intent
 import android.os.Bundle
 import android.view.View
+import android.widget.ImageButton
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.example.savehaven.data.Transaction
-import com.example.savehaven.data.TransactionRepository
-import com.example.savehaven.data.TransactionType
+import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityDashboardBinding
 import com.example.savehaven.utils.PreferenceHelper
+import com.example.savehaven.*
 import com.google.firebase.auth.FirebaseAuth
 import java.text.NumberFormat
 import java.util.*
@@ -39,6 +39,13 @@ class DashboardActivity : AppCompatActivity() {
 
         // Load data
         loadData()
+
+        // SETTINGS BUTTON LOGIC RIGHT HERE
+        val settingsButton = findViewById<ImageButton>(R.id.settings_icon)
+        settingsButton.setOnClickListener {
+            val intent = Intent(this, PreferencesActivity::class.java)
+            startActivity(intent)
+        }
     }
 
     override fun onResume() {

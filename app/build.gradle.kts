@@ -63,4 +63,13 @@ dependencies {
     // pie chart plugin
     implementation("com.github.PhilJay:MPAndroidChart:v3.1.0")
 
+    //maps
+    implementation("com.google.android.gms:play-services-maps:18.2.0")
+    implementation("com.google.android.libraries.places:places:3.3.0")
+
+    implementation("com.google.android.libraries.places:places:3.4.0")
+
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    implementation("com.google.android.libraries.places:places:3.3.0")
+
 }

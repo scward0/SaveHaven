@@ -58,6 +58,8 @@
             android:exported="false"
             android:parentActivityName=".ui.DashboardActivity" />
 
+        <activity android:name=".ui.MapActivity" />
+
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"

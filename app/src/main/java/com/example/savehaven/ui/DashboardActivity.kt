@@ -46,6 +46,12 @@ class DashboardActivity : AppCompatActivity() {
             val intent = Intent(this, PreferencesActivity::class.java)
             startActivity(intent)
         }
+
+        binding.btnOpenMap.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            startActivity(intent)
+        }
+
     }
 
     override fun onResume() {

@@ -1,20 +1,26 @@
 package com.example.savehaven.ui
 
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityAddTransactionBinding
+import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
-import com.example.savehaven.data.TransactionRepository
 
-class AddTransactionActivity : AppCompatActivity() {
+class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityAddTransactionBinding
     private lateinit var transactionRepository: TransactionRepository
+    private lateinit var drawerLayout: DrawerLayout
     private var selectedDate = Calendar.getInstance()
     private var isIncome = false
 
@@ -25,8 +31,74 @@ class AddTransactionActivity : AppCompatActivity() {
 
         transactionRepository = TransactionRepository()
 
+        setupToolbar()
+        setupNavigationDrawer()
         setupUI()
         setupListeners()
+    }
+
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = "Add Transaction"
+    }
+
+    private fun setupNavigationDrawer() {
+        drawerLayout = binding.drawerLayout
+        val navigationView = binding.navView
+
+        // Setup drawer toggle
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            binding.toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        // Set navigation item selected listener
+        navigationView.setNavigationItemSelectedListener(this)
+
+        // Set Add Transaction as selected
+        navigationView.setCheckedItem(R.id.nav_add_transaction)
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_dashboard -> {
+                startActivity(Intent(this, DashboardActivity::class.java))
+                finish() // Close this activity when navigating to dashboard
+            }
+            R.id.nav_add_transaction -> {
+                // Already on this screen, just close drawer
+                drawerLayout.closeDrawer(GravityCompat.START)
+                return true
+            }
+            R.id.nav_income_overview -> {
+                startActivity(Intent(this, IncomeActivity::class.java))
+            }
+            R.id.nav_expense_overview -> {
+                startActivity(Intent(this, ExpenseActivity::class.java))
+            }
+            R.id.nav_find_bank -> {
+                startActivity(Intent(this, MapActivity::class.java))
+            }
+            R.id.nav_preferences -> {
+                startActivity(Intent(this, PreferencesActivity::class.java))
+            }
+        }
+
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 
     private fun setupUI() {
@@ -41,10 +113,6 @@ class AddTransactionActivity : AppCompatActivity() {
     }
 
     private fun setupListeners() {
-
-        binding.btnBack.setOnClickListener { finish() }
-
-
         // Transaction type toggle
         binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
@@ -62,8 +130,6 @@ class AddTransactionActivity : AppCompatActivity() {
         binding.btnAddTransaction.setOnClickListener {
             addTransaction()
         }
-
-
     }
 
     private fun updateCategoryDropdown() {

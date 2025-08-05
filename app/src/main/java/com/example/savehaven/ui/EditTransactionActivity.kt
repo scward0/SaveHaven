@@ -2,19 +2,26 @@ package com.example.savehaven.ui
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
+import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.widget.ArrayAdapter
 import android.widget.Toast
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityEditTransactionBinding
+import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
 
-class EditTransactionActivity : AppCompatActivity() {
+class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityEditTransactionBinding
     private lateinit var transactionRepository: TransactionRepository
+    private lateinit var drawerLayout: DrawerLayout
     private var selectedDate = Calendar.getInstance()
     private var isIncome = false
     private var transactionId: String = ""
@@ -34,15 +41,78 @@ class EditTransactionActivity : AppCompatActivity() {
             return
         }
 
+        setupToolbar()
+        setupNavigationDrawer()
         setupListeners()
         loadTransaction()
     }
 
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = "Edit Transaction"
+    }
+
+    private fun setupNavigationDrawer() {
+        drawerLayout = binding.drawerLayout
+        val navigationView = binding.navView
+
+        // Setup drawer toggle
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            binding.toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        // Set navigation item selected listener
+        navigationView.setNavigationItemSelectedListener(this)
+
+        // Don't set any item as selected since this is an edit screen
+        // accessed from various places
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_dashboard -> {
+                startActivity(Intent(this, DashboardActivity::class.java))
+                finish() // Close this activity when navigating away
+            }
+            R.id.nav_add_transaction -> {
+                startActivity(Intent(this, AddTransactionActivity::class.java))
+                finish() // Close this activity when navigating away
+            }
+            R.id.nav_income_overview -> {
+                startActivity(Intent(this, IncomeActivity::class.java))
+                finish() // Close this activity when navigating away
+            }
+            R.id.nav_expense_overview -> {
+                startActivity(Intent(this, ExpenseActivity::class.java))
+                finish() // Close this activity when navigating away
+            }
+            R.id.nav_find_bank -> {
+                startActivity(Intent(this, MapActivity::class.java))
+            }
+            R.id.nav_preferences -> {
+                startActivity(Intent(this, PreferencesActivity::class.java))
+            }
+        }
+
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
+
     private fun setupListeners() {
-
-        binding.btnBack.setOnClickListener { finish() }
-
-
         // Transaction type toggle
         binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {

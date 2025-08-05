@@ -3,8 +3,12 @@ package com.example.savehaven.ui
 import android.content.Intent
 import android.graphics.Color
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.savehaven.R
 import com.example.savehaven.data.Transaction
@@ -15,14 +19,16 @@ import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
 import com.github.mikephil.charting.formatter.PercentFormatter
+import com.google.android.material.navigation.NavigationView
 import java.text.NumberFormat
 import java.util.*
 
-class ExpenseActivity : AppCompatActivity() {
+class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityExpenseBinding
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var expenseTransactionAdapter: DashboardTransactionAdapter
+    private lateinit var drawerLayout: DrawerLayout
 
     private val numberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
@@ -34,17 +40,86 @@ class ExpenseActivity : AppCompatActivity() {
 
         transactionRepository = TransactionRepository()
 
+        setupToolbar()
+        setupNavigationDrawer()
         setupUI()
         setupRecyclerView()
         loadExpenseData()
     }
 
-    private fun setupUI() {
-        // Set up toolbar/back button
-        binding.btnBack.setOnClickListener {
-            finish()
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = "Expense Overview"
+    }
+
+    private fun setupNavigationDrawer() {
+        drawerLayout = binding.drawerLayout
+        val navigationView = binding.navView
+
+        // Setup drawer toggle
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            binding.toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        // Set navigation item selected listener
+        navigationView.setNavigationItemSelectedListener(this)
+
+        // Set Expense Overview as selected
+        navigationView.setCheckedItem(R.id.nav_expense_overview)
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_dashboard -> {
+                startActivity(Intent(this, DashboardActivity::class.java))
+                finish() // Close this activity when navigating to dashboard
+            }
+            R.id.nav_add_transaction -> {
+                startActivity(Intent(this, AddTransactionActivity::class.java))
+            }
+            R.id.nav_income_overview -> {
+                startActivity(Intent(this, IncomeActivity::class.java))
+                finish() // Close this activity when navigating to income
+            }
+            R.id.nav_expense_overview -> {
+                // Already on this screen, just close drawer
+                drawerLayout.closeDrawer(GravityCompat.START)
+                return true
+            }
+            R.id.nav_find_bank -> {
+                startActivity(Intent(this, MapActivity::class.java))
+            }
+            R.id.nav_preferences -> {
+                startActivity(Intent(this, PreferencesActivity::class.java))
+            }
         }
 
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
+
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        loadExpenseData() // Refresh data when returning from edit
+        // Reset navigation selection to expense overview when returning
+        binding.navView.setCheckedItem(R.id.nav_expense_overview)
+    }
+
+    private fun setupUI() {
         // Initialize chart
         setupPieChart()
     }
@@ -188,10 +263,5 @@ class ExpenseActivity : AppCompatActivity() {
         binding.pieChart.visibility = View.VISIBLE
         binding.rvExpenseTransactions.visibility = View.VISIBLE
         binding.tvNoExpenses.visibility = View.GONE
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadExpenseData() // Refresh data when returning from edit
     }
 }

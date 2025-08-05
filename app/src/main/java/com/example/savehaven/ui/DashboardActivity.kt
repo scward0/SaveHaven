@@ -2,24 +2,29 @@ package com.example.savehaven.ui
 
 import android.content.Intent
 import android.os.Bundle
+import android.view.MenuItem
 import android.view.View
-import android.widget.ImageButton
+import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.view.GravityCompat
+import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
+import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityDashboardBinding
 import com.example.savehaven.utils.PreferenceHelper
-import com.example.savehaven.*
+import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import java.text.NumberFormat
 import java.util.*
 
-class DashboardActivity : AppCompatActivity() {
+class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityDashboardBinding
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var preferenceHelper: PreferenceHelper
     private lateinit var recentTransactionsAdapter: DashboardTransactionAdapter
+    private lateinit var drawerLayout: DrawerLayout
 
     private val numberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
@@ -33,30 +38,88 @@ class DashboardActivity : AppCompatActivity() {
         transactionRepository = TransactionRepository()
         preferenceHelper = PreferenceHelper(this)
 
+        setupToolbar()
+        setupNavigationDrawer()
         setupUI()
         setupRecyclerView()
         setupClickListeners()
 
         // Load data
         loadData()
+    }
 
-        // SETTINGS BUTTON LOGIC RIGHT HERE
-        val settingsButton = findViewById<ImageButton>(R.id.settings_icon)
-        settingsButton.setOnClickListener {
-            val intent = Intent(this, PreferencesActivity::class.java)
-            startActivity(intent)
+    private fun setupToolbar() {
+        setSupportActionBar(binding.toolbar)
+        supportActionBar?.title = "SaveHaven Dashboard"
+    }
+
+    private fun setupNavigationDrawer() {
+        drawerLayout = binding.drawerLayout
+        val navigationView = binding.navView
+
+        // Setup drawer toggle
+        val toggle = ActionBarDrawerToggle(
+            this,
+            drawerLayout,
+            binding.toolbar,
+            R.string.navigation_drawer_open,
+            R.string.navigation_drawer_close
+        )
+        drawerLayout.addDrawerListener(toggle)
+        toggle.syncState()
+
+        // Set navigation item selected listener
+        navigationView.setNavigationItemSelectedListener(this)
+
+        // Set Dashboard as selected by default
+        navigationView.setCheckedItem(R.id.nav_dashboard)
+    }
+
+    override fun onNavigationItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.nav_dashboard -> {
+                // Already on dashboard, just close drawer
+                drawerLayout.closeDrawer(GravityCompat.START)
+                return true
+            }
+            R.id.nav_add_transaction -> {
+                startActivity(Intent(this, AddTransactionActivity::class.java))
+            }
+            R.id.nav_income_overview -> {
+                startActivity(Intent(this, IncomeActivity::class.java))
+            }
+            R.id.nav_expense_overview -> {
+                startActivity(Intent(this, ExpenseActivity::class.java))
+            }
+            R.id.nav_transaction_history -> {
+                startActivity(Intent(this, TransactionHistoryActivity::class.java))
+            }
+            R.id.nav_find_bank -> {
+                startActivity(Intent(this, MapActivity::class.java))
+            }
+            R.id.nav_preferences -> {
+                startActivity(Intent(this, PreferencesActivity::class.java))
+            }
+
         }
 
-        binding.btnOpenMap.setOnClickListener {
-            val intent = Intent(this, MapActivity::class.java)
-            startActivity(intent)
-        }
+        drawerLayout.closeDrawer(GravityCompat.START)
+        return true
+    }
 
+    override fun onBackPressed() {
+        if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
+            drawerLayout.closeDrawer(GravityCompat.START)
+        } else {
+            super.onBackPressed()
+        }
     }
 
     override fun onResume() {
         super.onResume()
         loadData()
+        // Reset navigation selection to dashboard when returning
+        binding.navView.setCheckedItem(R.id.nav_dashboard)
     }
 
     private fun loadData() {
@@ -139,7 +202,7 @@ class DashboardActivity : AppCompatActivity() {
         recentTransactionsAdapter = DashboardTransactionAdapter { transaction ->
             // Click to edit transaction
             val intent = Intent(this, EditTransactionActivity::class.java)
-            intent.putExtra("transaction_id", transaction.id)  // Fixed: lowercase to match EditTransactionActivity
+            intent.putExtra("transaction_id", transaction.id)
             startActivity(intent)
         }
 
@@ -163,13 +226,11 @@ class DashboardActivity : AppCompatActivity() {
         }
 
         binding.cardIncome.setOnClickListener {
-            val intent = Intent(this, IncomeActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, IncomeActivity::class.java))
         }
 
         binding.cardExpenses.setOnClickListener {
-            val intent = Intent(this, ExpenseActivity::class.java)
-            startActivity(intent)
+            startActivity(Intent(this, ExpenseActivity::class.java))
         }
     }
 

@@ -1,5 +1,6 @@
 package com.example.savehaven.ui
 
+// Import required Android and Google Maps packages
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -31,17 +32,31 @@ import java.util.*
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
+    // View binding for layout
     private lateinit var binding: ActivityMapBinding
+
+    // GoogleMap object
     private lateinit var map: GoogleMap
+
+    // Navigation drawer
     private lateinit var drawerLayout: DrawerLayout
+
+    // HTTP client for API calls
     private val client = OkHttpClient()
 
-    private var currentSearchKeyword = "bank" // Keyword for nearby place search
-    private var lastSearchLatLng: LatLng? = null // Last searched map center
-    private val minMovementThresholdMeters = 10000 // Threshold to avoid excessive re-searching
+    // Keyword used to search for nearby places
+    private var currentSearchKeyword = "bank"
 
-    // Location-related
+    // Tracks the last location searched to avoid repeated searches on small moves
+    private var lastSearchLatLng: LatLng? = null
+
+    // Threshold to determine significant map movement
+    private val minMovementThresholdMeters = 10000
+
+    // Location permission request code
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
+
+    // Used to retrieve user's current location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,29 +64,33 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        // Setup toolbar and navigation drawer
         setupToolbar()
         setupNavigationDrawer()
 
-        // Initialize Places API
+        // Initialize the Places API
         if (!Places.isInitialized()) {
             Places.initialize(applicationContext, getString(R.string.google_maps_key))
         }
 
-        // Initialize location services
+        // Initialize fused location provider
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Load map fragment
+        // Load the map fragment
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
+        // Setup search button click listener
         setupClickListeners()
     }
 
+    // Set up the top toolbar
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.title = "Find a Bank"
     }
 
+    // Set up the navigation drawer and its click listeners
     private fun setupNavigationDrawer() {
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
@@ -90,6 +109,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         navigationView.setCheckedItem(R.id.nav_find_bank)
     }
 
+    // Handle navigation drawer item clicks
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
         when (item.itemId) {
             R.id.nav_dashboard -> {
@@ -119,6 +139,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         return true
     }
 
+    // Handle back press to close the drawer if open
     override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -127,11 +148,13 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
+    // Ensure the correct navigation item is highlighted when resuming
     override fun onResume() {
         super.onResume()
         binding.navView.setCheckedItem(R.id.nav_find_bank)
     }
 
+    // Setup the search button to trigger geolocation lookup
     private fun setupClickListeners() {
         binding.btnSearch.setOnClickListener {
             val location = binding.etSearch.text.toString()
@@ -143,12 +166,15 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
+    // Map is ready to use
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        val defaultLocation = LatLng(40.7128, -74.0060) // New York City
+        // Set default map location to New York City
+        val defaultLocation = LatLng(40.7128, -74.0060)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
 
+        // Detect camera movement and trigger search if necessary
         map.setOnCameraIdleListener {
             val newCenter = map.cameraPosition.target
             if (lastSearchLatLng == null || distanceBetween(lastSearchLatLng!!, newCenter) > minMovementThresholdMeters) {
@@ -160,6 +186,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         checkLocationPermissionAndEnable()
     }
 
+    // Request location permission if not granted
     private fun checkLocationPermissionAndEnable() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED
@@ -174,6 +201,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
+    // Enable location tracking on the map
     private fun enableUserLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED
@@ -191,6 +219,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
+    // Handle the result of the location permission dialog
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
@@ -202,6 +231,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
+    // Search for a location using geocoding
     private fun searchLocation(location: String) {
         try {
             val geocoder = Geocoder(this, Locale.getDefault())
@@ -222,9 +252,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
+    // Search for nearby places using Google Places API
     private fun performNearbySearch(lat: Double, lng: Double, keyword: String) {
         val apiKey = getString(R.string.google_maps_key)
-        val radius = 2000 // meters
+        val radius = 2000 // in meters
         val url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
                 "location=$lat,$lng&radius=$radius&keyword=$keyword&key=$apiKey"
 
@@ -270,6 +301,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         })
     }
 
+    // Calculate distance between two LatLng points
     private fun distanceBetween(from: LatLng, to: LatLng): Float {
         val results = FloatArray(1)
         android.location.Location.distanceBetween(

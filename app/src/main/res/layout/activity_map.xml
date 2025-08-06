@@ -64,6 +64,7 @@
                         android:layout_height="wrap_content"
                         android:orientation="horizontal">
 
+                        <!-- Input Field -->
                         <com.google.android.material.textfield.TextInputLayout
                             android:layout_width="0dp"
                             android:layout_height="wrap_content"
@@ -80,19 +81,28 @@
 
                         </com.google.android.material.textfield.TextInputLayout>
 
-                        <com.google.android.material.button.MaterialButton
-                            android:id="@+id/btnSearch"
+                        <!-- Button Column -->
+                        <LinearLayout
                             android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
-                            android:text="Search"
-                            android:layout_marginStart="8dp"
-                            style="@style/Widget.Material3.Button" />
+                            android:orientation="vertical"
+                            android:gravity="center_horizontal">
+
+                            <com.google.android.material.button.MaterialButton
+                                android:id="@+id/btnSearch"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:text="Search"
+                                style="@style/Widget.Material3.Button"
+                                android:layout_marginBottom="8dp" />
+
+                        </LinearLayout>
 
                     </LinearLayout>
 
                 </LinearLayout>
-
             </com.google.android.material.card.MaterialCardView>
+
 
             <!-- Google Map -->
             <com.google.android.material.card.MaterialCardView
@@ -112,6 +122,9 @@
                     android:layout_height="match_parent" />
 
             </com.google.android.material.card.MaterialCardView>
+
+
+
 
         </LinearLayout>
 

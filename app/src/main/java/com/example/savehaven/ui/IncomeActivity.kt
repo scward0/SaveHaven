@@ -15,6 +15,8 @@ import com.example.savehaven.data.Transaction
 import com.example.savehaven.data.TransactionRepository
 import com.example.savehaven.data.TransactionType
 import com.example.savehaven.databinding.ActivityIncomeBinding
+import com.example.savehaven.utils.NavigationHandler
+import com.example.savehaven.utils.setNavigationSelection
 import com.github.mikephil.charting.data.PieData
 import com.github.mikephil.charting.data.PieDataSet
 import com.github.mikephil.charting.data.PieEntry
@@ -70,38 +72,13 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Set Income Overview as selected
-        navigationView.setCheckedItem(R.id.nav_income_overview)
+        // Use the extension function to set the correct selection
+        setNavigationSelection(this, navigationView)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish() // Close this activity when navigating to dashboard
-            }
-            R.id.nav_add_transaction -> {
-                startActivity(Intent(this, AddTransactionActivity::class.java))
-            }
-            R.id.nav_income_overview -> {
-                // Already on this screen, just close drawer
-                drawerLayout.closeDrawer(GravityCompat.START)
-                return true
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-                finish() // Close this activity when navigating to expenses
-            }
-            R.id.nav_find_bank -> {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
-            R.id.nav_preferences -> {
-                startActivity(Intent(this, PreferencesActivity::class.java))
-            }
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - finish on main navigation for overview screens
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
     override fun onBackPressed() {
@@ -115,8 +92,8 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
     override fun onResume() {
         super.onResume()
         loadIncomeData() // Refresh data when returning from edit
-        // Reset navigation selection to income overview when returning
-        binding.navView.setCheckedItem(R.id.nav_income_overview)
+        // Reset navigation selection when returning
+        setNavigationSelection(this, binding.navView)
     }
 
     private fun setupUI() {

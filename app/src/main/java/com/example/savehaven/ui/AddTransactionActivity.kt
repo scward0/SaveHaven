@@ -1,7 +1,6 @@
 package com.example.savehaven.ui
 
 import android.app.DatePickerDialog
-import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -13,6 +12,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityAddTransactionBinding
+import com.example.savehaven.utils.NavigationHandler
+import com.example.savehaven.utils.setNavigationSelection
 import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
@@ -60,37 +61,13 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
         // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Set Add Transaction as selected
-        navigationView.setCheckedItem(R.id.nav_add_transaction)
+        // Use the extension function to set the correct selection
+        setNavigationSelection(this, navigationView)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish() // Close this activity when navigating to dashboard
-            }
-            R.id.nav_add_transaction -> {
-                // Already on this screen, just close drawer
-                drawerLayout.closeDrawer(GravityCompat.START)
-                return true
-            }
-            R.id.nav_income_overview -> {
-                startActivity(Intent(this, IncomeActivity::class.java))
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-            }
-            R.id.nav_find_bank -> {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
-            R.id.nav_preferences -> {
-                startActivity(Intent(this, PreferencesActivity::class.java))
-            }
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - finish on main navigation since this is a utility screen
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
     override fun onBackPressed() {

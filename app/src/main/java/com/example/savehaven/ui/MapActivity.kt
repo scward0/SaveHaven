@@ -2,7 +2,6 @@ package com.example.savehaven.ui
 
 // Import required Android and Google Maps packages
 import android.Manifest
-import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Geocoder
 import android.os.Bundle
@@ -15,6 +14,8 @@ import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
 import com.example.savehaven.databinding.ActivityMapBinding
+import com.example.savehaven.utils.NavigationHandler
+import com.example.savehaven.utils.setNavigationSelection
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.maps.CameraUpdateFactory
@@ -106,37 +107,15 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         toggle.syncState()
 
         navigationView.setNavigationItemSelectedListener(this)
-        navigationView.setCheckedItem(R.id.nav_find_bank)
+
+        // Use the extension function to set the correct selection
+        setNavigationSelection(this, navigationView)
     }
 
     // Handle navigation drawer item clicks
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish()
-            }
-            R.id.nav_add_transaction -> {
-                startActivity(Intent(this, AddTransactionActivity::class.java))
-            }
-            R.id.nav_income_overview -> {
-                startActivity(Intent(this, IncomeActivity::class.java))
-                finish()
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-                finish()
-            }
-            R.id.nav_find_bank -> {
-                drawerLayout.closeDrawer(GravityCompat.START)
-                return true
-            }
-            R.id.nav_preferences -> {
-                startActivity(Intent(this, PreferencesActivity::class.java))
-            }
-        }
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - don't finish on main navigation since maps can be used alongside other features
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
     // Handle back press to close the drawer if open
@@ -151,7 +130,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
     // Ensure the correct navigation item is highlighted when resuming
     override fun onResume() {
         super.onResume()
-        binding.navView.setCheckedItem(R.id.nav_find_bank)
+        // Reset navigation selection when returning
+        setNavigationSelection(this, binding.navView)
     }
 
     // Setup the search button to trigger geolocation lookup

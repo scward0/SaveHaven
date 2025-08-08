@@ -2,7 +2,6 @@ package com.example.savehaven.ui
 
 import android.app.AlertDialog
 import android.app.DatePickerDialog
-import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.ArrayAdapter
@@ -14,6 +13,8 @@ import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityEditTransactionBinding
+import com.example.savehaven.utils.NavigationHandler
+import com.example.savehaven.utils.setNavigationSelection
 import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
@@ -70,38 +71,14 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Don't set any item as selected since this is an edit screen
-        // accessed from various places
+        // Don't set any selection for EditTransactionActivity (modal-like behavior)
+        // The setNavigationSelection extension function handles this automatically
+        setNavigationSelection(this, navigationView)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish() // Close this activity when navigating away
-            }
-            R.id.nav_add_transaction -> {
-                startActivity(Intent(this, AddTransactionActivity::class.java))
-                finish() // Close this activity when navigating away
-            }
-            R.id.nav_income_overview -> {
-                startActivity(Intent(this, IncomeActivity::class.java))
-                finish() // Close this activity when navigating away
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-                finish() // Close this activity when navigating away
-            }
-            R.id.nav_find_bank -> {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
-            R.id.nav_preferences -> {
-                startActivity(Intent(this, PreferencesActivity::class.java))
-            }
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - finish on main navigation since this is a modal-like edit screen
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
     override fun onBackPressed() {

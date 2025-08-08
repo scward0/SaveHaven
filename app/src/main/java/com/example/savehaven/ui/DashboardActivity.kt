@@ -9,10 +9,8 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
-import android.preference.PreferenceManager
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
@@ -26,14 +24,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityDashboardBinding
-import com.example.savehaven.utils.FinancialTipsProvider
+import com.example.savehaven.utils.NavigationHandler
 import com.example.savehaven.utils.PreferenceHelper
+import com.example.savehaven.utils.setNavigationSelection
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import java.text.NumberFormat
-import java.text.SimpleDateFormat
 import java.util.*
-import androidx.core.content.edit
 
 @Suppress("DEPRECATION")
 class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
@@ -87,7 +84,6 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             showFinancialTipDialog(tip)
             showFinancialTipNotification(tip)
         }
-
     }
 
     // Show financial tip pop-up
@@ -132,7 +128,6 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         manager.notify(1002, builder.build())
     }
 
-
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.title = "SaveHaven Dashboard"
@@ -156,44 +151,13 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Set Dashboard as selected by default
-        navigationView.setCheckedItem(R.id.nav_dashboard)
+        // Use the extension function to set the correct selection
+        setNavigationSelection(this, navigationView)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                // Already on dashboard, just close drawer
-                drawerLayout.closeDrawer(GravityCompat.START)
-                return true
-            }
-            R.id.nav_add_transaction -> {
-                startActivity(Intent(this, AddTransactionActivity::class.java))
-            }
-            R.id.nav_income_overview -> {
-                startActivity(Intent(this, IncomeActivity::class.java))
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-            }
-            R.id.nav_transaction_history -> {
-                startActivity(Intent(this, TransactionHistoryActivity::class.java))
-            }
-            R.id.nav_find_bank -> {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
-            R.id.nav_preferences -> {
-                startActivity(Intent(this, PreferencesActivity::class.java))
-            }
-            R.id.nav_logout -> {
-                logout()
-                return true
-            }
-
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - don't finish on main navigation since this IS the main screen
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = false)
     }
 
     override fun onBackPressed() {
@@ -207,8 +171,8 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     override fun onResume() {
         super.onResume()
         loadData()
-        // Reset navigation selection to dashboard when returning
-        binding.navView.setCheckedItem(R.id.nav_dashboard)
+        // Reset navigation selection when returning
+        setNavigationSelection(this, binding.navView)
     }
 
     private fun loadData() {
@@ -310,9 +274,8 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             startActivity(Intent(this, TransactionHistoryActivity::class.java))
         }
 
-        binding.btnLogout.setOnClickListener {
-            logout()
-        }
+        // Remove the old logout button click listener since it's now handled by NavigationHandler
+        // binding.btnLogout.setOnClickListener { logout() }
 
         binding.cardIncome.setOnClickListener {
             startActivity(Intent(this, IncomeActivity::class.java))
@@ -334,21 +297,12 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         binding.tvNoTransactions.visibility = View.VISIBLE
     }
 
-    private fun logout() {
-        // Clear user session
-        preferenceHelper.clearUserSession()
-
-        // Sign out from Firebase
-        FirebaseAuth.getInstance().signOut()
-
-        // Navigate to login
-        redirectToLogin()
-    }
-
     private fun redirectToLogin() {
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
+
+    // Remove the old logout() method since it's now handled by NavigationHandler
 }

@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.example.savehaven.R
 import com.example.savehaven.data.*
+import com.example.savehaven.utils.NavigationHandler
+import com.example.savehaven.utils.setNavigationSelection
 import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
@@ -73,37 +75,13 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Don't set any item as selected since this is accessed from "View All" button
-        // It's more of a utility screen than a main navigation destination
+        // Use the extension function to set the correct selection
+        setNavigationSelection(this, navigationView)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish() // Close this activity when navigating to main screens
-            }
-            R.id.nav_add_transaction -> {
-                startActivity(Intent(this, AddTransactionActivity::class.java))
-            }
-            R.id.nav_income_overview -> {
-                startActivity(Intent(this, IncomeActivity::class.java))
-                finish() // Close this activity when navigating to main screens
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-                finish() // Close this activity when navigating to main screens
-            }
-            R.id.nav_find_bank -> {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
-            R.id.nav_preferences -> {
-                startActivity(Intent(this, PreferencesActivity::class.java))
-            }
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - finish on main navigation since this is a utility screen
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
     override fun onBackPressed() {

@@ -1,6 +1,5 @@
 package com.example.savehaven.ui
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
@@ -9,7 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
+import com.example.savehaven.utils.NavigationHandler
 import com.example.savehaven.utils.PreferenceHelper
+import com.example.savehaven.utils.setNavigationSelection
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -83,39 +84,13 @@ class PreferencesActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
 
-        // Set Preferences as selected
-        navigationView.setCheckedItem(R.id.nav_preferences)
+        // Use the extension function to set the correct selection
+        setNavigationSelection(this, navigationView)
     }
 
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        when (item.itemId) {
-            R.id.nav_dashboard -> {
-                startActivity(Intent(this, DashboardActivity::class.java))
-                finish() // Close this activity when navigating to main screens
-            }
-            R.id.nav_add_transaction -> {
-                startActivity(Intent(this, AddTransactionActivity::class.java))
-            }
-            R.id.nav_income_overview -> {
-                startActivity(Intent(this, IncomeActivity::class.java))
-                finish() // Close this activity when navigating to main screens
-            }
-            R.id.nav_expense_overview -> {
-                startActivity(Intent(this, ExpenseActivity::class.java))
-                finish() // Close this activity when navigating to main screens
-            }
-            R.id.nav_find_bank -> {
-                startActivity(Intent(this, MapActivity::class.java))
-            }
-            R.id.nav_preferences -> {
-                // Already on this screen, just close drawer
-                drawerLayout.closeDrawer(GravityCompat.START)
-                return true
-            }
-        }
-
-        drawerLayout.closeDrawer(GravityCompat.START)
-        return true
+        // Use the universal NavigationHandler - finish on main navigation since this is a utility screen
+        return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
     override fun onBackPressed() {
@@ -128,9 +103,8 @@ class PreferencesActivity : AppCompatActivity(), NavigationView.OnNavigationItem
 
     override fun onResume() {
         super.onResume()
-        // Reset navigation selection to preferences when returning
-        val navigationView = findViewById<NavigationView>(R.id.nav_view)
-        navigationView.setCheckedItem(R.id.nav_preferences)
+        // Reset navigation selection when returning
+        setNavigationSelection(this, findViewById<NavigationView>(R.id.nav_view))
     }
 
     private fun initViews() {

@@ -3,11 +3,14 @@ package com.example.savehaven.utils
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.core.content.edit
 
 class PreferenceHelper(context: Context) {
     private val prefs: SharedPreferences =
         context.getSharedPreferences(Constants.PREF_NAME, Context.MODE_PRIVATE)
 
+    private val sharedPreferences: SharedPreferences =
+        context.getSharedPreferences("SaveHavenPrefs", Context.MODE_PRIVATE)
     companion object {
         private const val TAG = "PreferenceHelper"
         // Additional keys for session management
@@ -16,12 +19,20 @@ class PreferenceHelper(context: Context) {
     }
 
     // ========== YOUR EXISTING METHODS ==========
+    // Boolean getter
+    fun getBoolean(key: String, default: Boolean): Boolean {
+        return sharedPreferences.getBoolean(key, default)
+    }
 
+    // Boolean setter
+    fun setBoolean(key: String, value: Boolean) {
+        sharedPreferences.edit { putBoolean(key, value) }
+    }
     fun setRememberMe(remember: Boolean, email: String = "") {
-        prefs.edit()
-            .putBoolean(Constants.PREF_REMEMBER_ME, remember)
-            .putString(Constants.PREF_USER_EMAIL, if (remember) email else "")
-            .apply()
+        prefs.edit {
+            putBoolean(Constants.PREF_REMEMBER_ME, remember)
+                .putString(Constants.PREF_USER_EMAIL, if (remember) email else "")
+        }
     }
 
     fun getRememberedEmail(): String {

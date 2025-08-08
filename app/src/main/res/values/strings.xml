@@ -8,4 +8,110 @@
     <string name="nav_header_title">SaveHaven</string>
     <string name="nav_header_subtitle">Building your financial future</string>
     <string name="nav_header_desc">Navigation header</string>
+
+    <string-array name="financial_tips">
+        <item>Track your expenses daily to spot waste.</item>
+        <item>Set up an automatic transfer to your savings.</item>
+        <item>Review subscriptions monthly and cancel unused ones.</item>
+        <item>Build an emergency fund covering 3–6 months of expenses.</item>
+        <item>Pay off high-interest debt first.</item>
+        <item>Use a budget rule: 50% needs, 30% wants, 20% savings.</item>
+        <item>Shop with a list to avoid impulse buys.</item>
+        <item>Compare prices before big purchases.</item>
+        <item>Save unexpected money (bonuses, gifts) instead of spending.</item>
+        <item>Invest early—even small amounts compound over time.</item>
+        <item>Unsubscribe from marketing emails to resist temptation.</item>
+        <item>Use cash instead of credit to stay within budget.</item>
+        <item>Don’t borrow for wants, only needs.</item>
+        <item>Use student discounts whenever possible.</item>
+        <item>Split large bills with roommates fairly and quickly.</item>
+        <item>Start building credit responsibly with a starter card.</item>
+        <item>Pay your credit card balance in full every month.</item>
+        <item>Use budgeting apps to track income and spending.</item>
+        <item>Cook meals at home instead of eating out.</item>
+        <item>Buy generic brands—they’re usually just as good.</item>
+        <item>Set financial goals for the month and track them.</item>
+        <item>Use library resources instead of buying books.</item>
+        <item>Wait 24 hours before making large purchases.</item>
+        <item>Keep an eye out for sales and promo codes.</item>
+        <item>Use loyalty rewards and cash-back programs wisely.</item>
+        <item>Start a side hustle to boost your income.</item>
+        <item>Buy used instead of new whenever possible.</item>
+        <item>Bundle insurance to save money.</item>
+        <item>Make a shopping list and stick to it.</item>
+        <item>Set a weekly spending cap on non-essentials.</item>
+        <item>Drink water—it’s free and healthy.</item>
+        <item>Walk, bike, or use public transit to save on gas.</item>
+        <item>Don’t be afraid to negotiate prices or bills.</item>
+        <item>Review your bank statements monthly.</item>
+        <item>Understand student loan repayment options early.</item>
+        <item>Use your student ID for campus discounts and deals.</item>
+        <item>Plan your meals to avoid food waste.</item>
+        <item>Stick to your grocery budget by using a calculator.</item>
+        <item>Start investing as early as possible.</item>
+        <item>Sign up for a free financial literacy course.</item>
+        <item>Keep your emergency fund in a separate account.</item>
+        <item>Cancel free trials before they auto-renew.</item>
+        <item>Use envelope budgeting for physical cash control.</item>
+        <item>Track your net worth every few months.</item>
+        <item>Label your savings accounts for motivation.</item>
+        <item>Round up transactions to save spare change.</item>
+        <item>Evaluate wants vs. needs honestly.</item>
+        <item>Learn the basics of compound interest.</item>
+        <item>Don’t co-sign loans unless you can afford to repay them.</item>
+        <item>Set financial boundaries with friends and family.</item>
+        <item>Review your credit report at least once a year.</item>
+        <item>Automate your bills to avoid late fees.</item>
+        <item>Don’t spend money to “treat yourself” if you’re broke.</item>
+        <item>Set up a separate account just for bills.</item>
+        <item>Be honest about your financial limits.</item>
+        <item>Always read the fine print before signing anything.</item>
+        <item>Build good financial habits, not just quick fixes.</item>
+        <item>Track your impulse purchases to find patterns.</item>
+        <item>Don’t chase trends—buy what you truly value.</item>
+        <item>Use social media less to avoid spending triggers.</item>
+        <item>Get renter’s insurance—it’s cheap and important.</item>
+        <item>Sell old items for extra cash.</item>
+        <item>Keep your change jar and cash it in quarterly.</item>
+        <item>Use timers to cut electricity and water costs.</item>
+        <item>Avoid buy-now, pay-later traps.</item>
+        <item>Limit how often you eat out each month.</item>
+        <item>Make your own coffee instead of buying daily.</item>
+        <item>Know your credit score and how to improve it.</item>
+        <item>Set a savings goal for a fun reward.</item>
+        <item>Don\'t compare your financial journey to others.</item>
+        <item>Understand interest rates before taking loans.</item>
+        <item>Start saving for retirement now, even $10 helps.</item>
+        <item>Make a debt payoff plan and track progress.</item>
+        <item>Declutter and avoid buying replacements.</item>
+        <item>Don\'t lend money you can’t afford to lose.</item>
+        <item>Ask for student discounts at local businesses.</item>
+        <item>Shop at discount or thrift stores.</item>
+        <item>Keep snacks with you to avoid vending machine splurges.</item>
+        <item>Join campus events with free food or supplies.</item>
+        <item>Sleep on big purchases before committing.</item>
+        <item>Evaluate recurring expenses every 3 months.</item>
+        <item>Use your refund wisely, not recklessly.</item>
+        <item>Resist the urge to upgrade working electronics.</item>
+        <item>Log every purchase for one week.</item>
+        <item>Challenge yourself to a no-spend week.</item>
+        <item>Open a high-yield savings account.</item>
+        <item>Keep financial documents organized and backed up.</item>
+        <item>Learn to do basic repairs instead of outsourcing.</item>
+        <item>Use group deals and coupons for activities.</item>
+        <item>Ask for lower interest rates on your cards.</item>
+        <item>Learn one new financial term each week.</item>
+        <item>Join free personal finance communities or forums.</item>
+        <item>Review your goals at the end of each month.</item>
+        <item>Delay gratification to reach bigger goals.</item>
+        <item>Celebrate small money wins to stay motivated.</item>
+        <item>Limit shopping when bored or stressed.</item>
+        <item>Switch banks if you\'re paying unnecessary fees.</item>
+        <item>Reinvest dividends instead of cashing out.</item>
+        <item>Stay informed on your financial aid status.</item>
+        <item>Understand tax basics even as a student.</item>
+        <item>Don’t carry debt just to boost credit.</item>
+        <item>Use financial tools that match your lifestyle.</item>
+        <item>Remember: savings = freedom + peace of mind.</item>
+    </string-array>
 </resources>

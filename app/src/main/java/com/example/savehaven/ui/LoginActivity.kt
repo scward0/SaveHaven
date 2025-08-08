@@ -13,6 +13,7 @@ import com.google.android.material.textfield.TextInputEditText
 import com.google.android.material.textfield.TextInputLayout
 import com.example.savehaven.R
 import com.example.savehaven.data.AuthRepository
+import com.example.savehaven.utils.FinancialTipsProvider
 import com.example.savehaven.utils.PreferenceHelper
 import com.example.savehaven.utils.ValidationUtils
 import kotlinx.coroutines.launch
@@ -98,8 +99,14 @@ class LoginActivity : AppCompatActivity() {
                     // Handle remember me
                     preferenceHelper.setRememberMe(cbRememberMe.isChecked, email)
 
-                    // Navigate to dashboard
+                    // Navigate to dashboard with education tip trigger flag
+                    val showTips = preferenceHelper.getBoolean("education_facts", true)
                     val intent = Intent(this@LoginActivity, DashboardActivity::class.java)
+                    if (showTips) {
+                        val tip = FinancialTipsProvider.getRandomTip()
+                        intent.putExtra("financial_tip", tip)
+                    }
+
                     startActivity(intent)
                     finish()
                 }

@@ -1,23 +1,41 @@
 package com.example.savehaven.ui
 
+import android.Manifest
+import android.app.AlertDialog
+import android.app.NotificationChannel
+import android.app.NotificationManager
+import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
+import android.preference.PreferenceManager
 import android.view.MenuItem
 import android.view.View
+import android.widget.Toast
+import androidx.annotation.RequiresPermission
 import androidx.appcompat.app.ActionBarDrawerToggle
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
+import androidx.core.content.ContextCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.savehaven.R
 import com.example.savehaven.data.*
 import com.example.savehaven.databinding.ActivityDashboardBinding
+import com.example.savehaven.utils.FinancialTipsProvider
 import com.example.savehaven.utils.PreferenceHelper
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
 import java.text.NumberFormat
+import java.text.SimpleDateFormat
 import java.util.*
+import androidx.core.content.edit
 
+@Suppress("DEPRECATION")
 class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityDashboardBinding
@@ -46,7 +64,74 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         // Load data
         loadData()
+
+        // Request notification permission (Android 13+)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    1001
+                )
+            }
+        }
+
+        // Create notification channel
+        createNotificationChannel()
+
+        // Show tip if user enabled it in Preferences
+        val showTips = PreferenceHelper(this).getBoolean("education_facts", true)
+        val tip = intent.getStringExtra("financial_tip")
+        if (tip != null && showTips) {
+            showFinancialTipDialog(tip)
+            showFinancialTipNotification(tip)
+        }
+
     }
+
+    // Show financial tip pop-up
+    private fun showFinancialTipDialog(tip: String) {
+        AlertDialog.Builder(this)
+            .setTitle("💡 Financial Tip")
+            .setMessage(tip)
+            .setPositiveButton("Got it") { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setCancelable(true)
+            .show()
+    }
+
+    // Create notification channel
+    private fun createNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                "financial_tips_channel",
+                "Financial Tips",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Daily financial education tips"
+            }
+
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
+    }
+
+    // Show financial tip notification
+    @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
+    private fun showFinancialTipNotification(tip: String) {
+        val builder = NotificationCompat.Builder(this, "financial_tips_channel")
+            .setSmallIcon(R.drawable.educational)
+            .setContentTitle("💡 Financial Tip")
+            .setContentText(tip)
+            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setAutoCancel(true)
+
+        val manager = NotificationManagerCompat.from(this)
+        manager.notify(1002, builder.build())
+    }
+
 
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
@@ -99,6 +184,10 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             }
             R.id.nav_preferences -> {
                 startActivity(Intent(this, PreferencesActivity::class.java))
+            }
+            R.id.nav_logout -> {
+                logout()
+                return true
             }
 
         }

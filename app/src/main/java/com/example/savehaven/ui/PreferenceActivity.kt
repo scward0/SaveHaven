@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.example.savehaven.R
+import com.example.savehaven.utils.PreferenceHelper
 import com.google.android.material.materialswitch.MaterialSwitch
 import com.google.android.material.navigation.NavigationView
 import com.google.firebase.auth.FirebaseAuth
@@ -44,6 +45,13 @@ class PreferencesActivity : AppCompatActivity(), NavigationView.OnNavigationItem
                     switchHabit.isChecked = document.getBoolean("habit_notifications") ?: true
                     switchDaily.isChecked = document.getBoolean("daily_reminders") ?: true
                     switchFunFacts.isChecked = document.getBoolean("education_facts") ?: true
+
+                    val educationEnabled = document.getBoolean("education_facts") ?: true
+                    switchFunFacts.isChecked = educationEnabled
+
+                    // Sync local preference
+                    PreferenceHelper(this).setBoolean("education_facts", educationEnabled)
+
                 }
                 // Only activate listeners AFTER setting initial states
                 listenersActive = true
@@ -156,6 +164,8 @@ class PreferencesActivity : AppCompatActivity(), NavigationView.OnNavigationItem
         switchFunFacts.setOnCheckedChangeListener { _, isChecked ->
             if (listenersActive) {
                 saveToFirestore(db, uid, "education_facts", isChecked)
+                // ALSO update local SharedPreferences so MainActivity & DashboardActivity read correct value
+                PreferenceHelper(this).setBoolean("education_facts", isChecked)
             }
         }
     }

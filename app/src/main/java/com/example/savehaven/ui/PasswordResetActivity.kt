@@ -16,8 +16,13 @@ import com.example.savehaven.data.AuthRepository
 import com.example.savehaven.utils.ValidationUtils
 import kotlinx.coroutines.launch
 
+/**
+ * Password reset screen - sends reset email via Firebase Auth
+ * Can pre-fill email if passed from login screen
+ */
 class PasswordResetActivity : AppCompatActivity() {
 
+    // UI components
     private lateinit var btnBack: ImageButton
     private lateinit var tilEmail: TextInputLayout
     private lateinit var etEmail: TextInputEditText
@@ -27,7 +32,7 @@ class PasswordResetActivity : AppCompatActivity() {
     private lateinit var progressBar: ProgressBar
 
     private lateinit var authRepository: AuthRepository
-    private var resetEmailSent = false
+    private var resetEmailSent = false // Track if we've already sent an email
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,9 +41,10 @@ class PasswordResetActivity : AppCompatActivity() {
         initViews()
         initRepositories()
         setupClickListeners()
-        loadPassedEmail()
+        loadPassedEmail() // Pre-fill email if it was passed from login screen
     }
 
+    // Link all UI components
     private fun initViews() {
         btnBack = findViewById(R.id.btnBack)
         tilEmail = findViewById(R.id.tilEmail)
@@ -53,28 +59,30 @@ class PasswordResetActivity : AppCompatActivity() {
         authRepository = AuthRepository()
     }
 
+    // Wire up button clicks
     private fun setupClickListeners() {
         btnBack.setOnClickListener { finish() }
         btnReset.setOnClickListener { attemptPasswordReset() }
         btnBackToLogin.setOnClickListener { finish() }
     }
 
+    // If user came from login screen with email entered, pre-fill it
     private fun loadPassedEmail() {
-        // If email was passed from LoginActivity, pre-fill it
         val passedEmail = intent.getStringExtra("email")
         if (!passedEmail.isNullOrEmpty()) {
             etEmail.setText(passedEmail)
         }
     }
 
+    // Main password reset logic
     private fun attemptPasswordReset() {
         val email = etEmail.text.toString().trim()
 
-        // Clear previous errors
+        // Clear previous messages
         tilEmail.error = null
         tvMessage.visibility = View.GONE
 
-        // Validate email
+        // Validate email format
         if (!validateEmail(email)) {
             return
         }
@@ -82,7 +90,7 @@ class PasswordResetActivity : AppCompatActivity() {
         // Show loading state
         setLoadingState(true)
 
-        // Perform password reset
+        // Send reset email via Firebase
         lifecycleScope.launch {
             authRepository.resetPassword(email)
                 .onSuccess {
@@ -97,6 +105,7 @@ class PasswordResetActivity : AppCompatActivity() {
         }
     }
 
+    // Validate email format
     private fun validateEmail(email: String): Boolean {
         val emailError = ValidationUtils.getEmailErrorMessage(email)
         if (emailError != null) {
@@ -106,6 +115,7 @@ class PasswordResetActivity : AppCompatActivity() {
         return true
     }
 
+    // Show/hide loading spinner and update button
     private fun setLoadingState(isLoading: Boolean) {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         btnReset.isEnabled = !isLoading
@@ -113,16 +123,19 @@ class PasswordResetActivity : AppCompatActivity() {
         etEmail.isEnabled = !isLoading
     }
 
+    // Show success message and update button for resending
     private fun showSuccessMessage(email: String) {
         tvMessage.text = "Password reset instructions have been sent to $email. Please check your inbox and follow the instructions to reset your password."
         tvMessage.setTextColor(ContextCompat.getColor(this, android.R.color.holo_green_dark))
         tvMessage.visibility = View.VISIBLE
 
-        // Update button text for resend functionality
+        // Change button text to allow resending
         btnReset.text = "Resend Email"
     }
 
+    // Show user-friendly error messages
     private fun showErrorMessage(message: String) {
+        // Make error messages more user-friendly
         tvMessage.text = when {
             message.contains("user") && message.contains("not") ->
                 "No account found with this email address. Please check your email or create a new account."

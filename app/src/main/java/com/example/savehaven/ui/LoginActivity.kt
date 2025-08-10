@@ -18,8 +18,13 @@ import com.example.savehaven.utils.PreferenceHelper
 import com.example.savehaven.utils.ValidationUtils
 import kotlinx.coroutines.launch
 
+/**
+ * Login screen - handles user authentication and "remember me" functionality
+ * Also triggers educational tips if user has them enabled
+ */
 class LoginActivity : AppCompatActivity() {
 
+    // UI components - using findViewById since this was built before view binding everywhere
     private lateinit var tilEmail: TextInputLayout
     private lateinit var tilPassword: TextInputLayout
     private lateinit var etEmail: TextInputEditText
@@ -31,6 +36,7 @@ class LoginActivity : AppCompatActivity() {
     private lateinit var tvError: TextView
     private lateinit var progressBar: ProgressBar
 
+    // Our data repositories
     private lateinit var authRepository: AuthRepository
     private lateinit var preferenceHelper: PreferenceHelper
 
@@ -41,9 +47,10 @@ class LoginActivity : AppCompatActivity() {
         initViews()
         initRepositories()
         setupClickListeners()
-        loadRememberedEmail()
+        loadRememberedEmail() // Pre-fill email if user chose "remember me" last time
     }
 
+    // Link all our UI components
     private fun initViews() {
         tilEmail = findViewById(R.id.tilEmail)
         tilPassword = findViewById(R.id.tilPassword)
@@ -57,17 +64,20 @@ class LoginActivity : AppCompatActivity() {
         progressBar = findViewById(R.id.progressBar)
     }
 
+    // Set up our data access objects
     private fun initRepositories() {
         authRepository = AuthRepository()
         preferenceHelper = PreferenceHelper(this)
     }
 
+    // Wire up all the button clicks
     private fun setupClickListeners() {
         btnLogin.setOnClickListener { attemptLogin() }
         tvCreateAccount.setOnClickListener { goToRegister() }
         tvForgotPassword.setOnClickListener { goToPasswordReset() }
     }
 
+    // If user checked "remember me" before, pre-fill their email
     private fun loadRememberedEmail() {
         if (preferenceHelper.isRememberMeEnabled()) {
             etEmail.setText(preferenceHelper.getRememberedEmail())
@@ -75,31 +85,32 @@ class LoginActivity : AppCompatActivity() {
         }
     }
 
+    // Main login logic
     private fun attemptLogin() {
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
 
-        // Clear previous errors
+        // Clear any previous error messages
         tilEmail.error = null
         tilPassword.error = null
         tvError.visibility = View.GONE
 
-        // Validate inputs
+        // Check if inputs are valid before hitting the server
         if (!validateInputs(email, password)) {
             return
         }
 
-        // Show loading state
+        // Show loading spinner
         setLoadingState(true)
 
-        // Perform login
+        // Use coroutine for async Firebase auth
         lifecycleScope.launch {
             authRepository.loginUser(email, password)
                 .onSuccess { user ->
-                    // Handle remember me
+                    // Login worked! Handle remember me preference
                     preferenceHelper.setRememberMe(cbRememberMe.isChecked, email)
 
-                    // Navigate to dashboard with education tip trigger flag
+                    // Go to dashboard, maybe with a financial tip
                     val showTips = preferenceHelper.getBoolean("education_facts", true)
                     val intent = Intent(this@LoginActivity, DashboardActivity::class.java)
                     if (showTips) {
@@ -111,23 +122,25 @@ class LoginActivity : AppCompatActivity() {
                     finish()
                 }
                 .onFailure { exception ->
+                    // Login failed - show error and hide loading
                     setLoadingState(false)
                     showError(exception.message ?: "Login failed")
                 }
         }
     }
 
+    // Basic input validation before trying to login
     private fun validateInputs(email: String, password: String): Boolean {
         var isValid = true
 
-        // Validate email
+        // Check email format
         val emailError = ValidationUtils.getEmailErrorMessage(email)
         if (emailError != null) {
             tilEmail.error = emailError
             isValid = false
         }
 
-        // Validate password
+        // Check password isn't empty
         if (password.isEmpty()) {
             tilPassword.error = "Password is required"
             isValid = false
@@ -136,25 +149,29 @@ class LoginActivity : AppCompatActivity() {
         return isValid
     }
 
+    // Show/hide loading spinner and disable button
     private fun setLoadingState(isLoading: Boolean) {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         btnLogin.isEnabled = !isLoading
         btnLogin.text = if (isLoading) "" else "Login"
     }
 
+    // Display error message to user
     private fun showError(message: String) {
         tvError.text = message
         tvError.visibility = View.VISIBLE
     }
 
+    // Navigate to registration screen
     private fun goToRegister() {
         val intent = Intent(this, RegisterActivity::class.java)
         startActivity(intent)
     }
 
+    // Navigate to password reset screen
     private fun goToPasswordReset() {
         val intent = Intent(this, PasswordResetActivity::class.java)
-        // Pass the current email if entered
+        // Pass current email if they've entered one
         val email = etEmail.text.toString().trim()
         if (email.isNotEmpty()) {
             intent.putExtra("email", email)

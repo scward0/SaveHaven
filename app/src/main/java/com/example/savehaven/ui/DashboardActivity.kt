@@ -32,6 +32,10 @@ import com.google.firebase.auth.FirebaseAuth
 import java.text.NumberFormat
 import java.util.*
 
+/**
+ * Main dashboard - the heart of the SaveHaven app
+ * Shows financial summary, recent transactions, and provides quick access to key features
+ */
 @Suppress("DEPRECATION")
 class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
@@ -41,6 +45,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
     private lateinit var recentTransactionsAdapter: DashboardTransactionAdapter
     private lateinit var drawerLayout: DrawerLayout
 
+    // Format money consistently across the dashboard
     private val numberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -49,7 +54,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         binding = ActivityDashboardBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Initialize dependencies
+        // Set up our data access and preferences
         transactionRepository = TransactionRepository()
         preferenceHelper = PreferenceHelper(this)
 
@@ -59,10 +64,10 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         setupRecyclerView()
         setupClickListeners()
 
-        // Load data
+        // Load user's financial data
         loadData()
 
-        // Request notification permission (Android 13+)
+        // Handle notification permissions for Android 13+
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
                 != PackageManager.PERMISSION_GRANTED) {
@@ -74,10 +79,10 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             }
         }
 
-        // Create notification channel
+        // Set up notifications for educational tips
         createNotificationChannel()
 
-        // Show tip if user enabled it in Preferences
+        // Show educational tip if user has them enabled and we got one from MainActivity
         val showTips = PreferenceHelper(this).getBoolean("education_facts", true)
         val tip = intent.getStringExtra("financial_tip")
         if (tip != null && showTips) {
@@ -86,7 +91,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
     }
 
-    // Show financial tip pop-up
+    // Show educational tip as a popup dialog
     private fun showFinancialTipDialog(tip: String) {
         AlertDialog.Builder(this)
             .setTitle("💡 Financial Tip")
@@ -98,7 +103,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             .show()
     }
 
-    // Create notification channel
+    // Create notification channel for Android 8.0+
     private fun createNotificationChannel() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             val channel = NotificationChannel(
@@ -114,7 +119,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
     }
 
-    // Show financial tip notification
+    // Show educational tip as a notification too
     @RequiresPermission(Manifest.permission.POST_NOTIFICATIONS)
     private fun showFinancialTipNotification(tip: String) {
         val builder = NotificationCompat.Builder(this, "financial_tips_channel")
@@ -137,7 +142,6 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
 
-        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -148,15 +152,12 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Use the extension function to set the correct selection
         setNavigationSelection(this, navigationView)
     }
 
+    // Don't finish when navigating since this IS the main screen
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - don't finish on main navigation since this IS the main screen
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = false)
     }
 
@@ -168,13 +169,14 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
     }
 
+    // Refresh data when returning from other screens
     override fun onResume() {
         super.onResume()
         loadData()
-        // Reset navigation selection when returning
         setNavigationSelection(this, binding.navView)
     }
 
+    // Check if user is still logged in, redirect if not
     private fun loadData() {
         val currentUser = FirebaseAuth.getInstance().currentUser
         if (currentUser == null) {
@@ -185,6 +187,7 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         loadTransactions()
     }
 
+    // Load all user transactions and update the dashboard
     private fun loadTransactions() {
         transactionRepository.getUserTransactions { transactions, error ->
             runOnUiThread {
@@ -197,11 +200,13 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
     }
 
+    // Update both financial summary and recent transactions
     private fun updateUI(transactions: List<Transaction>) {
         updateFinancialSummary(transactions)
         updateRecentTransactions(transactions)
     }
 
+    // Calculate and display income, expenses, and net savings
     private fun updateFinancialSummary(transactions: List<Transaction>) {
         val income = transactions
             .filter { it.type == TransactionType.INCOME }
@@ -213,12 +218,12 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
 
         val netSavings = income - expenses
 
-        // Update UI
+        // Update the summary cards
         binding.tvTotalIncome.text = numberFormat.format(income)
         binding.tvTotalExpenses.text = numberFormat.format(expenses)
         binding.tvNetSavings.text = numberFormat.format(netSavings)
 
-        // Update savings status message
+        // Give user motivational feedback based on their savings
         val statusMessage = when {
             netSavings > 0 -> "Great job saving!"
             netSavings == 0.0 -> "Breaking even"
@@ -227,8 +232,8 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         binding.tvSavingsStatus.text = statusMessage
     }
 
+    // Show the 5 most recent transactions
     private fun updateRecentTransactions(transactions: List<Transaction>) {
-        // Show most recent 5 transactions
         val recentTransactions = transactions.take(5)
 
         if (recentTransactions.isEmpty()) {
@@ -241,19 +246,21 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
     }
 
+    // Set up initial UI state and user greeting
     private fun setupUI() {
-        // Display user name
+        // Show personalized greeting using email username
         val currentUser = FirebaseAuth.getInstance().currentUser
         val userName = currentUser?.email?.substringBefore('@') ?: "User"
         binding.tvUserName.text = "Hello, ${userName.replaceFirstChar { it.uppercase() }}!"
 
-        // Initialize with default values
+        // Show default state until data loads
         showDefaultState()
     }
 
+    // Set up recycler view for recent transactions
     private fun setupRecyclerView() {
         recentTransactionsAdapter = DashboardTransactionAdapter { transaction ->
-            // Click to edit transaction
+            // When user taps a transaction, open edit screen
             val intent = Intent(this, EditTransactionActivity::class.java)
             intent.putExtra("transaction_id", transaction.id)
             startActivity(intent)
@@ -265,26 +272,31 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         }
     }
 
+    // Wire up all the dashboard buttons
     private fun setupClickListeners() {
+        // Quick add transaction
         binding.btnAddTransaction.setOnClickListener {
             startActivity(Intent(this, AddTransactionActivity::class.java))
         }
 
+        // View all transactions
         binding.btnViewAllTransactions.setOnClickListener {
             startActivity(Intent(this, TransactionHistoryActivity::class.java))
         }
 
+        // Income analysis
         binding.cardIncome.setOnClickListener {
             startActivity(Intent(this, IncomeActivity::class.java))
         }
 
+        // Expense analysis
         binding.cardExpenses.setOnClickListener {
             startActivity(Intent(this, ExpenseActivity::class.java))
         }
     }
 
+    // Show default values when no data is available
     private fun showDefaultState() {
-        // Show default values when no data or error
         binding.tvTotalIncome.text = "$0.00"
         binding.tvTotalExpenses.text = "$0.00"
         binding.tvNetSavings.text = "$0.00"
@@ -294,11 +306,11 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         binding.tvNoTransactions.visibility = View.VISIBLE
     }
 
+    // Redirect to login if user session is invalid
     private fun redirectToLogin() {
         val intent = Intent(this, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         startActivity(intent)
         finish()
     }
-
 }

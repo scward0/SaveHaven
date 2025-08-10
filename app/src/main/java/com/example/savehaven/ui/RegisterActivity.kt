@@ -18,8 +18,13 @@ import com.example.savehaven.data.AuthRepository
 import com.example.savehaven.utils.ValidationUtils
 import kotlinx.coroutines.launch
 
+/**
+ * Registration screen with real-time password strength feedback
+ * Auto-logs user in after successful registration
+ */
 class RegisterActivity : AppCompatActivity() {
 
+    // All our form components
     private lateinit var tilUsername: TextInputLayout
     private lateinit var tilEmail: TextInputLayout
     private lateinit var tilPassword: TextInputLayout
@@ -31,7 +36,7 @@ class RegisterActivity : AppCompatActivity() {
     private lateinit var btnRegister: Button
     private lateinit var tvLogin: TextView
     private lateinit var tvError: TextView
-    private lateinit var tvPasswordStrength: TextView
+    private lateinit var tvPasswordStrength: TextView // Shows password strength as user types
     private lateinit var progressBar: ProgressBar
 
     private lateinit var authRepository: AuthRepository
@@ -43,9 +48,10 @@ class RegisterActivity : AppCompatActivity() {
         initViews()
         initRepositories()
         setupClickListeners()
-        setupPasswordStrengthIndicator()
+        setupPasswordStrengthIndicator() // Live feedback on password quality
     }
 
+    // Link all UI components
     private fun initViews() {
         tilUsername = findViewById(R.id.tilUsername)
         tilEmail = findViewById(R.id.tilEmail)
@@ -66,11 +72,13 @@ class RegisterActivity : AppCompatActivity() {
         authRepository = AuthRepository()
     }
 
+    // Wire up button clicks
     private fun setupClickListeners() {
         btnRegister.setOnClickListener { attemptRegistration() }
         tvLogin.setOnClickListener { goToLogin() }
     }
 
+    // Give user real-time feedback on password strength as they type
     private fun setupPasswordStrengthIndicator() {
         etPassword.addTextChangedListener(object : TextWatcher {
             override fun beforeTextChanged(s: CharSequence?, start: Int, count: Int, after: Int) {}
@@ -87,12 +95,13 @@ class RegisterActivity : AppCompatActivity() {
         })
     }
 
+    // Update password strength message and color
     private fun updatePasswordStrength(password: String) {
         val strengthMessage = ValidationUtils.getPasswordStrengthMessage(password)
         tvPasswordStrength.text = strengthMessage
         tvPasswordStrength.visibility = View.VISIBLE
 
-        // Color coding for password strength
+        // Color code the strength feedback
         when {
             password.length < 8 -> {
                 tvPasswordStrength.setTextColor(ContextCompat.getColor(this, android.R.color.holo_red_dark))
@@ -106,16 +115,17 @@ class RegisterActivity : AppCompatActivity() {
         }
     }
 
+    // Main registration logic
     private fun attemptRegistration() {
         val username = etUsername.text.toString().trim()
         val email = etEmail.text.toString().trim()
         val password = etPassword.text.toString()
         val confirmPassword = etConfirmPassword.text.toString()
 
-        // Clear previous errors
+        // Clear any previous errors
         clearErrors()
 
-        // Validate inputs
+        // Validate everything before hitting the server
         if (!validateInputs(username, email, password, confirmPassword)) {
             return
         }
@@ -123,47 +133,49 @@ class RegisterActivity : AppCompatActivity() {
         // Show loading state
         setLoadingState(true)
 
-        // Perform registration
+        // Try to create the account
         lifecycleScope.launch {
             authRepository.registerUser(username, email, password)
                 .onSuccess { user ->
-                    // Registration successful - auto login and go to dashboard
+                    // Registration worked! Go straight to dashboard (auto-login)
                     val intent = Intent(this@RegisterActivity, DashboardActivity::class.java)
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
                     startActivity(intent)
                     finish()
                 }
                 .onFailure { exception ->
+                    // Registration failed - show error
                     setLoadingState(false)
                     showError(exception.message ?: "Registration failed")
                 }
         }
     }
 
+    // Validate all form inputs
     private fun validateInputs(username: String, email: String, password: String, confirmPassword: String): Boolean {
         var isValid = true
 
-        // Validate username
+        // Check username
         val usernameError = ValidationUtils.getUsernameErrorMessage(username)
         if (usernameError != null) {
             tilUsername.error = usernameError
             isValid = false
         }
 
-        // Validate email
+        // Check email
         val emailError = ValidationUtils.getEmailErrorMessage(email)
         if (emailError != null) {
             tilEmail.error = emailError
             isValid = false
         }
 
-        // Validate password
+        // Check password strength
         if (!ValidationUtils.isValidPassword(password)) {
             tilPassword.error = "Password must be at least 8 characters"
             isValid = false
         }
 
-        // Validate password confirmation
+        // Check password confirmation
         if (confirmPassword.isEmpty()) {
             tilConfirmPassword.error = "Please confirm your password"
             isValid = false
@@ -175,6 +187,7 @@ class RegisterActivity : AppCompatActivity() {
         return isValid
     }
 
+    // Clear all error messages
     private fun clearErrors() {
         tilUsername.error = null
         tilEmail.error = null
@@ -183,24 +196,27 @@ class RegisterActivity : AppCompatActivity() {
         tvError.visibility = View.GONE
     }
 
+    // Show/hide loading spinner and disable inputs
     private fun setLoadingState(isLoading: Boolean) {
         progressBar.visibility = if (isLoading) View.VISIBLE else View.GONE
         btnRegister.isEnabled = !isLoading
         btnRegister.text = if (isLoading) "" else "Create Account"
 
-        // Disable all input fields during loading
+        // Disable all input fields while processing
         etUsername.isEnabled = !isLoading
         etEmail.isEnabled = !isLoading
         etPassword.isEnabled = !isLoading
         etConfirmPassword.isEnabled = !isLoading
     }
 
+    // Show error message to user
     private fun showError(message: String) {
         tvError.text = message
         tvError.visibility = View.VISIBLE
     }
 
+    // Go back to login screen
     private fun goToLogin() {
-        finish() // This will take user back to login screen
+        finish() // This takes user back to login
     }
 }

@@ -5,28 +5,34 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.example.savehaven.utils.Constants
 import kotlinx.coroutines.tasks.await
 
+/**
+ * Handles all the authentication stuff - registration, login, password reset
+ * Uses Firebase Auth + Firestore to store user profiles
+ */
 class AuthRepository {
     private val auth = FirebaseAuth.getInstance()
     private val firestore = FirebaseFirestore.getInstance()
 
+    // Register new user - checks username uniqueness first
     suspend fun registerUser(username: String, email: String, password: String): Result<User> {
         return try {
-            // Check if username is unique
+            // Make sure username isn't already taken
             if (!isUsernameUnique(username)) {
                 return Result.failure(Exception("Username already exists"))
             }
 
-            // Create Firebase user
+            // Create the Firebase auth account
             val authResult = auth.createUserWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("User creation failed")
 
-            // Create user document in Firestore
+            // Create user profile in our Firestore database
             val user = User(
                 uid = firebaseUser.uid,
                 username = username,
                 email = email
             )
 
+            // Save user profile to database
             firestore.collection(Constants.COLLECTION_USERS)
                 .document(firebaseUser.uid)
                 .set(user)
@@ -38,12 +44,14 @@ class AuthRepository {
         }
     }
 
+    // Login existing user
     suspend fun loginUser(email: String, password: String): Result<User> {
         return try {
+            // Authenticate with Firebase
             val authResult = auth.signInWithEmailAndPassword(email, password).await()
             val firebaseUser = authResult.user ?: throw Exception("Login failed")
 
-            // Get user data from Firestore
+            // Get their profile data from Firestore
             val userDoc = firestore.collection(Constants.COLLECTION_USERS)
                 .document(firebaseUser.uid)
                 .get()
@@ -58,6 +66,7 @@ class AuthRepository {
         }
     }
 
+    // Send password reset email
     suspend fun resetPassword(email: String): Result<Boolean> {
         return try {
             auth.sendPasswordResetEmail(email).await()
@@ -67,6 +76,7 @@ class AuthRepository {
         }
     }
 
+    // Check if username is available
     suspend fun isUsernameUnique(username: String): Boolean {
         return try {
             val querySnapshot = firestore.collection(Constants.COLLECTION_USERS)
@@ -74,12 +84,13 @@ class AuthRepository {
                 .get()
                 .await()
 
-            querySnapshot.isEmpty
+            querySnapshot.isEmpty // True if no matches found
         } catch (e: Exception) {
-            false // If error occurs, assume username is not unique to be safe
+            false // Assume not unique if we can't check
         }
     }
 
+    // Get current user info (basic)
     fun getCurrentUser(): User? {
         val firebaseUser = auth.currentUser
         return if (firebaseUser != null) {
@@ -89,6 +100,7 @@ class AuthRepository {
         }
     }
 
+    // Sign out current user
     fun signOut() {
         auth.signOut()
     }

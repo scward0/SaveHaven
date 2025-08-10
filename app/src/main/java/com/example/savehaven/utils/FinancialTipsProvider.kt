@@ -1,5 +1,9 @@
 package com.example.savehaven.utils
 
+/**
+ * Educational content provider for SaveHaven's financial literacy features
+ * Contains curated financial tips designed for young adults (16-22 years old)
+ */
 object FinancialTipsProvider {
     val tips = listOf(
         "Track your expenses daily to spot waste.",

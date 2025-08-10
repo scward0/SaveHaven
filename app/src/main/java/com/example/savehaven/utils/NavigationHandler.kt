@@ -11,15 +11,15 @@ import com.example.savehaven.ui.*
 import com.example.savehaven.utils.PreferenceHelper
 import com.google.firebase.auth.FirebaseAuth
 
+/**
+ * Centralized navigation handler - keeps navigation behavior consistent across all activities
+ * Every activity with a nav drawer uses this to handle menu clicks
+ */
 object NavigationHandler {
 
     /**
-     * Universal navigation handler for all activities with navigation drawer
-     * @param activity The current activity
-     * @param item The selected menu item
-     * @param drawerLayout The drawer layout to close
-     * @param shouldFinishOnMainNavigation Whether to finish current activity when navigating to main screens
-     * @return true if navigation was handled
+     * Handle navigation drawer menu selections
+     * shouldFinishOnMainNavigation: true for utility screens, false for main screens
      */
     fun handleNavigation(
         activity: Activity,
@@ -29,6 +29,7 @@ object NavigationHandler {
     ): Boolean {
         when (item.itemId) {
             R.id.nav_dashboard -> {
+                // Go to dashboard unless we're already there
                 if (activity !is DashboardActivity) {
                     activity.startActivity(Intent(activity, DashboardActivity::class.java))
                     if (shouldFinishOnMainNavigation) activity.finish()
@@ -38,6 +39,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_add_transaction -> {
+                // Open add transaction screen
                 if (activity !is AddTransactionActivity) {
                     activity.startActivity(Intent(activity, AddTransactionActivity::class.java))
                 } else {
@@ -46,6 +48,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_income_overview -> {
+                // Show income analysis
                 if (activity !is IncomeActivity) {
                     activity.startActivity(Intent(activity, IncomeActivity::class.java))
                     if (shouldFinishOnMainNavigation) activity.finish()
@@ -55,6 +58,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_expense_overview -> {
+                // Show expense analysis
                 if (activity !is ExpenseActivity) {
                     activity.startActivity(Intent(activity, ExpenseActivity::class.java))
                     if (shouldFinishOnMainNavigation) activity.finish()
@@ -64,6 +68,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_transaction_history -> {
+                // Show all transactions with filters
                 if (activity !is TransactionHistoryActivity) {
                     activity.startActivity(Intent(activity, TransactionHistoryActivity::class.java))
                 } else {
@@ -72,6 +77,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_find_bank -> {
+                // Open Google Maps bank finder
                 if (activity !is MapActivity) {
                     activity.startActivity(Intent(activity, MapActivity::class.java))
                 } else {
@@ -80,6 +86,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_preferences -> {
+                // Open user settings
                 if (activity !is PreferencesActivity) {
                     activity.startActivity(Intent(activity, PreferencesActivity::class.java))
                 } else {
@@ -88,6 +95,7 @@ object NavigationHandler {
                 }
             }
             R.id.nav_logout -> {
+                // Show confirmation dialog before logging out
                 showLogoutConfirmation(activity, drawerLayout)
                 return true
             }
@@ -97,6 +105,7 @@ object NavigationHandler {
         return true
     }
 
+    // Ask user if they really want to logout
     private fun showLogoutConfirmation(activity: Activity, drawerLayout: DrawerLayout) {
         AlertDialog.Builder(activity)
             .setTitle("Logout")
@@ -110,15 +119,16 @@ object NavigationHandler {
             .show()
     }
 
+    // Actually log the user out and clean up
     private fun performLogout(activity: Activity) {
-        // Clear user session
+        // Clear stored user data
         val preferenceHelper = PreferenceHelper(activity)
         preferenceHelper.clearUserSession()
 
-        // Sign out from Firebase
+        // Sign out of Firebase
         FirebaseAuth.getInstance().signOut()
 
-        // Navigate to login
+        // Go to login screen and clear the activity stack
         val intent = Intent(activity, LoginActivity::class.java)
         intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
         activity.startActivity(intent)
@@ -127,7 +137,8 @@ object NavigationHandler {
 }
 
 /**
- * Extension function to set the correct navigation item as checked
+ * Extension function to highlight the current screen in the nav drawer
+ * Call this in onResume() to keep the selection updated
  */
 fun setNavigationSelection(activity: Activity, navigationView: com.google.android.material.navigation.NavigationView) {
     when (activity) {
@@ -138,6 +149,6 @@ fun setNavigationSelection(activity: Activity, navigationView: com.google.androi
         is TransactionHistoryActivity -> navigationView.setCheckedItem(R.id.nav_transaction_history)
         is MapActivity -> navigationView.setCheckedItem(R.id.nav_find_bank)
         is PreferencesActivity -> navigationView.setCheckedItem(R.id.nav_preferences)
-        // EditTransactionActivity doesn't set any selection (modal-like behavior)
+        // EditTransactionActivity doesn't highlight anything (it's like a modal)
     }
 }

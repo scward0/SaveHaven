@@ -25,6 +25,10 @@ import com.google.android.material.navigation.NavigationView
 import java.text.NumberFormat
 import java.util.*
 
+/**
+ * Expense analysis screen - similar to IncomeActivity but for expenses
+ * Shows pie chart breakdown and list of all expense transactions
+ */
 class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityExpenseBinding
@@ -46,7 +50,7 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         setupNavigationDrawer()
         setupUI()
         setupRecyclerView()
-        loadExpenseData()
+        loadExpenseData() // Load and display expense data
     }
 
     private fun setupToolbar() {
@@ -58,7 +62,6 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
 
-        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -69,15 +72,12 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Use the extension function to set the correct selection
         setNavigationSelection(this, navigationView)
     }
 
+    // Finish when going to main navigation (this is an overview screen)
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - finish on main navigation for overview screens
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
@@ -89,24 +89,27 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         }
     }
 
+    // Refresh data when returning from edit transaction
     override fun onResume() {
         super.onResume()
-        loadExpenseData() // Refresh data when returning from edit
-        // Reset navigation selection when returning
+        loadExpenseData()
         setNavigationSelection(this, binding.navView)
     }
 
     private fun setupUI() {
-        // Initialize chart
+        // Configure the pie chart (same setup as income chart)
         setupPieChart()
     }
 
+    // Set up pie chart styling - same as income but with red color scheme
     private fun setupPieChart() {
         binding.pieChart.apply {
             setUsePercentValues(true)
             description.isEnabled = false
             setExtraOffsets(5f, 10f, 5f, 5f)
             dragDecelerationFrictionCoef = 0.95f
+
+            // Center hole configuration
             isDrawHoleEnabled = true
             setHoleColor(Color.WHITE)
             setTransparentCircleColor(Color.WHITE)
@@ -114,19 +117,24 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
             holeRadius = 58f
             transparentCircleRadius = 61f
             setDrawCenterText(true)
+
+            // Interaction and animation
             rotationAngle = 0f
             isRotationEnabled = true
             isHighlightPerTapEnabled = true
             animateY(1400)
+
+            // Labels
             legend.isEnabled = true
             setEntryLabelColor(Color.BLACK)
             setEntryLabelTextSize(12f)
         }
     }
 
+    // Set up recycler view for expense transaction list
     private fun setupRecyclerView() {
         expenseTransactionAdapter = DashboardTransactionAdapter { transaction ->
-            // Navigate to edit transaction
+            // Navigate to edit when user taps a transaction
             val intent = Intent(this, EditTransactionActivity::class.java)
             intent.putExtra("transaction_id", transaction.id)
             startActivity(intent)
@@ -138,12 +146,14 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         }
     }
 
+    // Load all expense transactions and update UI
     private fun loadExpenseData() {
         transactionRepository.getUserTransactions { transactions, error ->
             runOnUiThread {
                 if (error != null) {
                     showErrorState()
                 } else {
+                    // Filter to just expense transactions
                     val expenseTransactions = transactions.filter { it.type == TransactionType.EXPENSE }
                     updateUI(expenseTransactions)
                 }
@@ -151,6 +161,7 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         }
     }
 
+    // Update all UI components with expense data
     private fun updateUI(expenseTransactions: List<Transaction>) {
         if (expenseTransactions.isEmpty()) {
             showEmptyState()
@@ -161,8 +172,9 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         }
     }
 
+    // Create pie chart from expense data
     private fun updatePieChart(expenseTransactions: List<Transaction>) {
-        // Group transactions by category and calculate totals
+        // Group by category and sum amounts
         val categoryTotals = expenseTransactions
             .groupBy { it.category }
             .mapValues { (_, transactions) -> transactions.sumOf { it.amount } }
@@ -172,7 +184,6 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
             return
         }
 
-        // Calculate total expenses for percentages
         val totalExpenses = categoryTotals.values.sum()
 
         // Create pie entries
@@ -180,37 +191,39 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
             PieEntry(amount.toFloat(), category)
         }
 
-        // Create dataset
+        // Style with red color scheme for expenses
         val dataSet = PieDataSet(entries, "Expense Categories").apply {
-            colors = getExpenseColors()
+            colors = getExpenseColors() // Red/pink color scheme for expenses
             valueTextSize = 11f
             valueTextColor = Color.BLACK
             valueFormatter = PercentFormatter(binding.pieChart)
         }
 
-        // Set data to chart
+        // Apply to chart
         val data = PieData(dataSet)
         binding.pieChart.data = data
 
-        // Set center text
+        // Show total expenses in center
         binding.pieChart.centerText = "Total Expenses\n${numberFormat.format(totalExpenses)}"
         binding.pieChart.setCenterTextSize(16f)
 
         binding.pieChart.invalidate()
     }
 
+    // Update transaction list and summary
     private fun updateTransactionsList(expenseTransactions: List<Transaction>) {
-        // Sort by date (most recent first) and update adapter
+        // Sort newest first
         val sortedTransactions = expenseTransactions.sortedByDescending { it.date }
         expenseTransactionAdapter.updateTransactions(sortedTransactions)
 
-        // Update summary
+        // Update summary text
         val totalExpenses = expenseTransactions.sumOf { it.amount }
         val transactionCount = expenseTransactions.size
 
         binding.tvExpenseSummary.text = "Total: ${numberFormat.format(totalExpenses)} • $transactionCount transactions"
     }
 
+    // Red/pink color scheme for expense categories
     private fun getExpenseColors(): List<Int> {
         return listOf(
             Color.parseColor("#F44336"), // Red for Food
@@ -221,6 +234,7 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         )
     }
 
+    // Show when user has no expense transactions
     private fun showEmptyState() {
         binding.pieChart.visibility = View.GONE
         binding.rvExpenseTransactions.visibility = View.GONE
@@ -228,6 +242,7 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         binding.tvExpenseSummary.text = "No expense transactions yet"
     }
 
+    // Show error message
     private fun showErrorState() {
         binding.pieChart.visibility = View.GONE
         binding.rvExpenseTransactions.visibility = View.GONE
@@ -236,6 +251,7 @@ class ExpenseActivity : AppCompatActivity(), NavigationView.OnNavigationItemSele
         binding.tvExpenseSummary.text = "Please try again"
     }
 
+    // Show when we have expense data
     private fun showDataState(expenseTransactions: List<Transaction>) {
         binding.pieChart.visibility = View.VISIBLE
         binding.rvExpenseTransactions.visibility = View.VISIBLE

@@ -25,6 +25,10 @@ import com.google.android.material.navigation.NavigationView
 import java.text.NumberFormat
 import java.util.*
 
+/**
+ * Income analysis screen - shows pie chart breakdown and list of all income transactions
+ * Uses MPAndroidChart for the pie chart visualization
+ */
 class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
 
     private lateinit var binding: ActivityIncomeBinding
@@ -46,7 +50,7 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         setupNavigationDrawer()
         setupUI()
         setupRecyclerView()
-        loadIncomeData()
+        loadIncomeData() // Load and display income data
     }
 
     private fun setupToolbar() {
@@ -58,7 +62,6 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
 
-        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -69,15 +72,12 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Use the extension function to set the correct selection
         setNavigationSelection(this, navigationView)
     }
 
+    // Finish when going to main navigation (this is an overview screen)
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - finish on main navigation for overview screens
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
@@ -89,44 +89,52 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         }
     }
 
+    // Refresh data when returning from edit transaction
     override fun onResume() {
         super.onResume()
-        loadIncomeData() // Refresh data when returning from edit
-        // Reset navigation selection when returning
+        loadIncomeData()
         setNavigationSelection(this, binding.navView)
     }
 
     private fun setupUI() {
-        // Initialize chart
+        // Configure the pie chart appearance
         setupPieChart()
     }
 
+    // Set up pie chart styling and behavior
     private fun setupPieChart() {
         binding.pieChart.apply {
-            setUsePercentValues(true)
-            description.isEnabled = false
-            setExtraOffsets(5f, 10f, 5f, 5f)
-            dragDecelerationFrictionCoef = 0.95f
+            setUsePercentValues(true) // Show percentages instead of raw values
+            description.isEnabled = false // Hide chart description
+            setExtraOffsets(5f, 10f, 5f, 5f) // Add padding around chart
+            dragDecelerationFrictionCoef = 0.95f // Smooth spinning
+
+            // Configure the center hole
             isDrawHoleEnabled = true
             setHoleColor(Color.WHITE)
             setTransparentCircleColor(Color.WHITE)
             setTransparentCircleAlpha(110)
             holeRadius = 58f
             transparentCircleRadius = 61f
-            setDrawCenterText(true)
+            setDrawCenterText(true) // We'll put total income in center
+
+            // Interaction settings
             rotationAngle = 0f
             isRotationEnabled = true
             isHighlightPerTapEnabled = true
-            animateY(1400)
+            animateY(1400) // Animate chart appearance
+
+            // Labels and legend
             legend.isEnabled = true
             setEntryLabelColor(Color.BLACK)
             setEntryLabelTextSize(12f)
         }
     }
 
+    // Set up recycler view for income transaction list
     private fun setupRecyclerView() {
         incomeTransactionAdapter = DashboardTransactionAdapter { transaction ->
-            // Navigate to edit transaction
+            // When user taps a transaction, open edit screen
             val intent = Intent(this, EditTransactionActivity::class.java)
             intent.putExtra("transaction_id", transaction.id)
             startActivity(intent)
@@ -138,12 +146,14 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         }
     }
 
+    // Load all income transactions and update UI
     private fun loadIncomeData() {
         transactionRepository.getUserTransactions { transactions, error ->
             runOnUiThread {
                 if (error != null) {
                     showErrorState()
                 } else {
+                    // Filter to just income transactions
                     val incomeTransactions = transactions.filter { it.type == TransactionType.INCOME }
                     updateUI(incomeTransactions)
                 }
@@ -151,6 +161,7 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         }
     }
 
+    // Update all UI components with income data
     private fun updateUI(incomeTransactions: List<Transaction>) {
         if (incomeTransactions.isEmpty()) {
             showEmptyState()
@@ -161,8 +172,9 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         }
     }
 
+    // Create pie chart from income data
     private fun updatePieChart(incomeTransactions: List<Transaction>) {
-        // Group transactions by category and calculate totals
+        // Group transactions by category and sum amounts
         val categoryTotals = incomeTransactions
             .groupBy { it.category }
             .mapValues { (_, transactions) -> transactions.sumOf { it.amount } }
@@ -172,45 +184,46 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
             return
         }
 
-        // Calculate total income for percentages
         val totalIncome = categoryTotals.values.sum()
 
-        // Create pie entries
+        // Create pie chart entries
         val entries = categoryTotals.map { (category, amount) ->
             PieEntry(amount.toFloat(), category)
         }
 
-        // Create dataset
+        // Style the chart
         val dataSet = PieDataSet(entries, "Income Categories").apply {
-            colors = getIncomeColors()
+            colors = getIncomeColors() // Green color scheme for income
             valueTextSize = 11f
             valueTextColor = Color.BLACK
             valueFormatter = PercentFormatter(binding.pieChart)
         }
 
-        // Set data to chart
+        // Apply data to chart
         val data = PieData(dataSet)
         binding.pieChart.data = data
 
-        // Set center text
+        // Show total in center of donut chart
         binding.pieChart.centerText = "Total Income\n${numberFormat.format(totalIncome)}"
         binding.pieChart.setCenterTextSize(16f)
 
-        binding.pieChart.invalidate()
+        binding.pieChart.invalidate() // Refresh chart
     }
 
+    // Update the transaction list below the chart
     private fun updateTransactionsList(incomeTransactions: List<Transaction>) {
-        // Sort by date (most recent first) and update adapter
+        // Sort newest first for better UX
         val sortedTransactions = incomeTransactions.sortedByDescending { it.date }
         incomeTransactionAdapter.updateTransactions(sortedTransactions)
 
-        // Update summary
+        // Update summary text
         val totalIncome = incomeTransactions.sumOf { it.amount }
         val transactionCount = incomeTransactions.size
 
         binding.tvIncomeSummary.text = "Total: ${numberFormat.format(totalIncome)} • $transactionCount transactions"
     }
 
+    // Green color scheme for income categories
     private fun getIncomeColors(): List<Int> {
         return listOf(
             Color.parseColor("#4CAF50"), // Green for Paycheck
@@ -219,6 +232,7 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         )
     }
 
+    // Show when user has no income transactions
     private fun showEmptyState() {
         binding.pieChart.visibility = View.GONE
         binding.rvIncomeTransactions.visibility = View.GONE
@@ -226,6 +240,7 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         binding.tvIncomeSummary.text = "No income transactions yet"
     }
 
+    // Show when there's an error loading data
     private fun showErrorState() {
         binding.pieChart.visibility = View.GONE
         binding.rvIncomeTransactions.visibility = View.GONE
@@ -234,6 +249,7 @@ class IncomeActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelec
         binding.tvIncomeSummary.text = "Please try again"
     }
 
+    // Show when we have income data to display
     private fun showDataState(incomeTransactions: List<Transaction>) {
         binding.pieChart.visibility = View.VISIBLE
         binding.rvIncomeTransactions.visibility = View.VISIBLE

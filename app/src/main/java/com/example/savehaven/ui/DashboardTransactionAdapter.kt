@@ -13,14 +13,19 @@ import java.text.NumberFormat
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Adapter for showing recent transactions on the dashboard
+ * Simple layout with click to edit functionality
+ */
 class DashboardTransactionAdapter(
     private val onTransactionClick: (Transaction) -> Unit
 ) : RecyclerView.Adapter<DashboardTransactionAdapter.TransactionViewHolder>() {
 
     private var transactions = listOf<Transaction>()
-    private val dateFormat = SimpleDateFormat("MMM dd", Locale.US)
+    private val dateFormat = SimpleDateFormat("MMM dd", Locale.US) // Short date format
     private val numberFormat = NumberFormat.getCurrencyInstance(Locale.US)
 
+    // Update the transaction list and refresh display
     fun updateTransactions(newTransactions: List<Transaction>) {
         transactions = newTransactions
         notifyDataSetChanged()
@@ -45,6 +50,7 @@ class DashboardTransactionAdapter(
         private val tvDescription: TextView = itemView.findViewById(R.id.tvDescription)
 
         fun bind(transaction: Transaction) {
+            // Show basic transaction info
             tvCategory.text = transaction.category
             tvDate.text = dateFormat.format(Date(transaction.date))
             tvDescription.text = if (transaction.description.isNotEmpty()) {
@@ -53,21 +59,21 @@ class DashboardTransactionAdapter(
                 "No description"
             }
 
-            // Format amount with + or - prefix and appropriate color
+            // Format amount with +/- and appropriate colors
             val amountText = when (transaction.type) {
                 TransactionType.INCOME -> "+${numberFormat.format(transaction.amount)}"
                 TransactionType.EXPENSE -> "-${numberFormat.format(transaction.amount)}"
             }
             tvAmount.text = amountText
 
-            // Set color based on transaction type
+            // Color code: green for income, red for expenses
             val color = when (transaction.type) {
                 TransactionType.INCOME -> ContextCompat.getColor(itemView.context, android.R.color.holo_green_dark)
                 TransactionType.EXPENSE -> ContextCompat.getColor(itemView.context, android.R.color.holo_red_dark)
             }
             tvAmount.setTextColor(color)
 
-            // Set click listener
+            // Click to edit
             itemView.setOnClickListener {
                 onTransactionClick(transaction)
             }

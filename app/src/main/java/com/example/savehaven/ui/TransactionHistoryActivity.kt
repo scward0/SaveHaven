@@ -19,7 +19,13 @@ import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Transaction history with advanced filtering
+ * Users can filter by type, category, and date range
+ */
 class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
+
+    // UI components for filtering
     private lateinit var rvTransactions: RecyclerView
     private lateinit var spinnerTypeFilter: Spinner
     private lateinit var spinnerCategoryFilter: Spinner
@@ -30,10 +36,11 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
     private lateinit var tvNoTransactions: TextView
     private lateinit var drawerLayout: DrawerLayout
 
+    // Data management
     private lateinit var transactionAdapter: TransactionHistoryAdapter
     private lateinit var transactionRepository: TransactionRepository
-    private var allTransactions: List<Transaction> = emptyList()
-    private var filteredTransactions: List<Transaction> = emptyList()
+    private var allTransactions: List<Transaction> = emptyList() // Original data
+    private var filteredTransactions: List<Transaction> = emptyList() // What's currently shown
 
     private val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
 
@@ -45,7 +52,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         setupToolbar()
         setupNavigationDrawer()
         setupRecyclerView()
-        setupFilters()
+        setupFilters() // Set up all the filter controls
         transactionRepository = TransactionRepository()
 
         loadTransactions()
@@ -61,7 +68,6 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         drawerLayout = findViewById(R.id.drawer_layout)
         val navigationView = findViewById<NavigationView>(R.id.nav_view)
 
-        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -72,15 +78,12 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Use the extension function to set the correct selection
         setNavigationSelection(this, navigationView)
     }
 
+    // This is a utility screen, so finish when going to main navigation
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - finish on main navigation since this is a utility screen
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
@@ -92,6 +95,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         }
     }
 
+    // Link all UI components
     private fun initViews() {
         rvTransactions = findViewById(R.id.rvTransactions)
         spinnerTypeFilter = findViewById(R.id.spinnerTypeFilter)
@@ -103,34 +107,36 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         tvNoTransactions = findViewById(R.id.tvNoTransactions)
     }
 
+    // Set up transaction list with click to edit
     private fun setupRecyclerView() {
         transactionAdapter = TransactionHistoryAdapter(emptyList()) { transaction ->
-            // Handle edit transaction
+            // When user taps a transaction, open edit screen
             editTransaction(transaction)
         }
         rvTransactions.layoutManager = LinearLayoutManager(this)
         rvTransactions.adapter = transactionAdapter
     }
 
+    // Set up all the filter controls and their behavior
     private fun setupFilters() {
-        // Type filter
+        // Type filter dropdown (All, Income, Expense)
         val typeOptions = listOf("All Types", "Income", "Expense")
         val typeAdapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, typeOptions)
         typeAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         spinnerTypeFilter.adapter = typeAdapter
 
-        // Category filter
+        // Category filter (updates based on type selection)
         updateCategoryFilter()
 
-        // Date filters
+        // Date pickers for from/to dates
         etDateFrom.setOnClickListener { showDatePicker(etDateFrom) }
         etDateTo.setOnClickListener { showDatePicker(etDateTo) }
 
-        // Filter button
+        // Filter and clear buttons
         btnFilter.setOnClickListener { applyFilters() }
         btnClearFilters.setOnClickListener { clearFilters() }
 
-        // Type filter change listener
+        // When type changes, update available categories
         spinnerTypeFilter.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 updateCategoryFilter()
@@ -139,6 +145,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         }
     }
 
+    // Update category dropdown based on selected transaction type
     private fun updateCategoryFilter() {
         val selectedType = spinnerTypeFilter.selectedItem.toString()
         val categories = when (selectedType) {
@@ -152,6 +159,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         spinnerCategoryFilter.adapter = categoryAdapter
     }
 
+    // Show date picker for from/to date selection
     private fun showDatePicker(editText: EditText) {
         val calendar = Calendar.getInstance()
         val datePicker = android.app.DatePickerDialog(
@@ -167,6 +175,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         datePicker.show()
     }
 
+    // Load all user transactions from database
     private fun loadTransactions() {
         transactionRepository.getUserTransactions { transactions, error ->
             runOnUiThread {
@@ -175,6 +184,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
                     return@runOnUiThread
                 }
 
+                // Store original data and show all initially
                 allTransactions = transactions
                 filteredTransactions = transactions
                 updateDisplay()
@@ -182,26 +192,28 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         }
     }
 
+    // Apply all selected filters to the transaction list
     private fun applyFilters() {
         var filtered = allTransactions
 
-        // Type filter
+        // Filter by transaction type
         val selectedType = spinnerTypeFilter.selectedItem.toString()
         if (selectedType != "All Types") {
             val type = if (selectedType == "Income") TransactionType.INCOME else TransactionType.EXPENSE
             filtered = filtered.filter { it.type == type }
         }
 
-        // Category filter
+        // Filter by category
         val selectedCategory = spinnerCategoryFilter.selectedItem.toString()
         if (selectedCategory != "All Categories") {
             filtered = filtered.filter { it.category == selectedCategory }
         }
 
-        // Date range filter
+        // Filter by date range
         val dateFromText = etDateFrom.text.toString()
         val dateToText = etDateTo.text.toString()
 
+        // From date filter
         if (dateFromText.isNotEmpty()) {
             try {
                 val dateFrom = dateFormat.parse(dateFromText)?.time ?: 0
@@ -212,10 +224,11 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
             }
         }
 
+        // To date filter (include entire day)
         if (dateToText.isNotEmpty()) {
             try {
                 val dateTo = dateFormat.parse(dateToText)?.time ?: Long.MAX_VALUE
-                // Add 24 hours to include the entire day
+                // Add 24 hours to include transactions on the end date
                 val dateToEndOfDay = dateTo + (24 * 60 * 60 * 1000)
                 filtered = filtered.filter { it.date <= dateToEndOfDay }
             } catch (e: Exception) {
@@ -224,10 +237,12 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
             }
         }
 
+        // Update display with filtered results
         filteredTransactions = filtered
         updateDisplay()
     }
 
+    // Clear all filters and show all transactions
     private fun clearFilters() {
         spinnerTypeFilter.setSelection(0)
         spinnerCategoryFilter.setSelection(0)
@@ -237,6 +252,7 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         updateDisplay()
     }
 
+    // Update the recycler view with current filtered transactions
     private fun updateDisplay() {
         if (filteredTransactions.isEmpty()) {
             rvTransactions.visibility = View.GONE
@@ -248,14 +264,16 @@ class TransactionHistoryActivity : AppCompatActivity(), NavigationView.OnNavigat
         }
     }
 
+    // Open edit screen for selected transaction
     private fun editTransaction(transaction: Transaction) {
         val intent = Intent(this, EditTransactionActivity::class.java)
         intent.putExtra("transaction_id", transaction.id)
         startActivity(intent)
     }
 
+    // Refresh data when returning from edit screen
     override fun onResume() {
         super.onResume()
-        loadTransactions() // Refresh when returning from edit
+        loadTransactions()
     }
 }

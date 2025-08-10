@@ -18,12 +18,16 @@ import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Add new transaction screen with smart category switching
+ * Categories change based on income vs expense selection
+ */
 class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityAddTransactionBinding
     private lateinit var transactionRepository: TransactionRepository
     private lateinit var drawerLayout: DrawerLayout
-    private var selectedDate = Calendar.getInstance()
-    private var isIncome = false
+    private var selectedDate = Calendar.getInstance() // Defaults to today
+    private var isIncome = false // Track whether user selected income or expense
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -43,11 +47,11 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
         supportActionBar?.title = "Add Transaction"
     }
 
+    // Standard nav drawer setup - same pattern across the app
     private fun setupNavigationDrawer() {
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
 
-        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -58,15 +62,12 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Use the extension function to set the correct selection
         setNavigationSelection(this, navigationView)
     }
 
+    // Use the centralized navigation handler, finish this activity when going to main screens
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - finish on main navigation since this is a utility screen
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
@@ -78,37 +79,40 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
         }
     }
 
+    // Set up initial UI state
     private fun setupUI() {
-        // Set default date to today
+        // Show today's date by default
         updateDateDisplay()
 
-        // Setup category dropdown
+        // Set up category dropdown (will be empty until user picks income/expense)
         updateCategoryDropdown()
 
-        // Default to expense
+        // Default to expense (most common transaction type)
         binding.btnExpense.isChecked = true
     }
 
+    // Wire up all the interactive elements
     private fun setupListeners() {
-        // Transaction type toggle
+        // When user switches between income/expense, update category options
         binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 isIncome = checkedId == R.id.btnIncome
-                updateCategoryDropdown()
+                updateCategoryDropdown() // Refresh categories based on selection
             }
         }
 
-        // Date picker
+        // Date picker when user taps date field
         binding.etDate.setOnClickListener {
             showDatePicker()
         }
 
-        // Add transaction button
+        // Main save button
         binding.btnAddTransaction.setOnClickListener {
             addTransaction()
         }
     }
 
+    // Update category dropdown based on income vs expense selection
     private fun updateCategoryDropdown() {
         val categories = if (isIncome) {
             TransactionCategories.INCOME_CATEGORIES
@@ -118,9 +122,10 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
 
         val adapter = ArrayAdapter(this, android.R.layout.simple_dropdown_item_1line, categories)
         binding.spinnerCategory.setAdapter(adapter)
-        binding.spinnerCategory.setText("", false)
+        binding.spinnerCategory.setText("", false) // Clear current selection
     }
 
+    // Show date picker dialog
     private fun showDatePicker() {
         DatePickerDialog(
             this,
@@ -134,17 +139,20 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
         ).show()
     }
 
+    // Update the date field display
     private fun updateDateDisplay() {
         val formatter = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
         binding.etDate.setText(formatter.format(selectedDate.time))
     }
 
+    // Main transaction creation logic
     private fun addTransaction() {
-        // Validate inputs
+        // Get all the form values
         val amountText = binding.etAmount.text?.toString()?.trim()
         val category = binding.spinnerCategory.text?.toString()?.trim()
         val description = binding.etDescription.text?.toString()?.trim() ?: ""
 
+        // Validate amount
         if (amountText.isNullOrEmpty()) {
             binding.etAmount.error = "Amount is required"
             return
@@ -156,12 +164,13 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
             return
         }
 
+        // Validate category selection
         if (category.isNullOrEmpty()) {
             Toast.makeText(this, "Please select a category", Toast.LENGTH_SHORT).show()
             return
         }
 
-        // Create transaction
+        // Create the transaction object
         val transaction = Transaction(
             amount = amount,
             category = category,
@@ -170,18 +179,20 @@ class AddTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationI
             type = if (isIncome) TransactionType.INCOME else TransactionType.EXPENSE
         )
 
-        // Save to database
+        // Show loading state while saving
         binding.btnAddTransaction.isEnabled = false
         binding.btnAddTransaction.text = "Adding..."
 
+        // Save to database
         transactionRepository.addTransaction(transaction) { success, error ->
             runOnUiThread {
+                // Reset button state
                 binding.btnAddTransaction.isEnabled = true
                 binding.btnAddTransaction.text = "Add Transaction"
 
                 if (success) {
                     Toast.makeText(this, "Transaction added successfully!", Toast.LENGTH_SHORT).show()
-                    finish() // Return to previous screen
+                    finish() // Go back to previous screen
                 } else {
                     Toast.makeText(this, "Error: ${error ?: "Unknown error"}", Toast.LENGTH_LONG).show()
                 }

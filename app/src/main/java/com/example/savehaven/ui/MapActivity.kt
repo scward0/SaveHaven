@@ -1,6 +1,5 @@
 package com.example.savehaven.ui
 
-// Import required Android and Google Maps packages
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Geocoder
@@ -31,33 +30,26 @@ import org.json.JSONObject
 import java.io.IOException
 import java.util.*
 
+/**
+ * Bank finder using Google Maps and Places API
+ * Users can search by location or use current GPS location to find nearby banks
+ */
 class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNavigationItemSelectedListener {
 
-    // View binding for layout
     private lateinit var binding: ActivityMapBinding
-
-    // GoogleMap object
     private lateinit var map: GoogleMap
-
-    // Navigation drawer
     private lateinit var drawerLayout: DrawerLayout
 
-    // HTTP client for API calls
+    // For Places API calls
     private val client = OkHttpClient()
-
-    // Keyword used to search for nearby places
     private var currentSearchKeyword = "bank"
 
-    // Tracks the last location searched to avoid repeated searches on small moves
+    // Prevent too many API calls when map moves
     private var lastSearchLatLng: LatLng? = null
+    private val minMovementThresholdMeters = 10000 // Only search again if moved 10km
 
-    // Threshold to determine significant map movement
-    private val minMovementThresholdMeters = 10000
-
-    // Location permission request code
+    // Location permissions
     private val LOCATION_PERMISSION_REQUEST_CODE = 1001
-
-    // Used to retrieve user's current location
     private lateinit var fusedLocationClient: FusedLocationProviderClient
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -65,33 +57,30 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         binding = ActivityMapBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        // Setup toolbar and navigation drawer
         setupToolbar()
         setupNavigationDrawer()
 
-        // Initialize the Places API
+        // Initialize Google Places if not already done
         if (!Places.isInitialized()) {
             Places.initialize(applicationContext, getString(R.string.google_maps_key))
         }
 
-        // Initialize fused location provider
+        // Set up location services
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
-        // Load the map fragment
+        // Load the map
         val mapFragment = supportFragmentManager.findFragmentById(R.id.mapFragment) as SupportMapFragment
         mapFragment.getMapAsync(this)
 
-        // Setup search button click listener
+        // Set up search functionality
         setupClickListeners()
     }
 
-    // Set up the top toolbar
     private fun setupToolbar() {
         setSupportActionBar(binding.toolbar)
         supportActionBar?.title = "Find a Bank"
     }
 
-    // Set up the navigation drawer and its click listeners
     private fun setupNavigationDrawer() {
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
@@ -107,18 +96,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         toggle.syncState()
 
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Use the extension function to set the correct selection
         setNavigationSelection(this, navigationView)
     }
 
-    // Handle navigation drawer item clicks
+    // Maps can be used alongside other features, so finish when going to main navigation
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - don't finish on main navigation since maps can be used alongside other features
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
-    // Handle back press to close the drawer if open
     override fun onBackPressed() {
         if (drawerLayout.isDrawerOpen(GravityCompat.START)) {
             drawerLayout.closeDrawer(GravityCompat.START)
@@ -127,46 +112,46 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
-    // Ensure the correct navigation item is highlighted when resuming
     override fun onResume() {
         super.onResume()
-        // Reset navigation selection when returning
         setNavigationSelection(this, binding.navView)
     }
 
-    // Setup the search button to trigger geolocation lookup
+    // Set up the search button
     private fun setupClickListeners() {
         binding.btnSearch.setOnClickListener {
             val location = binding.etSearch.text.toString()
             if (location.isNotEmpty()) {
-                searchLocation(location)
+                searchLocation(location) // Search by entered location
             } else {
                 Toast.makeText(this, "Please enter a location", Toast.LENGTH_SHORT).show()
             }
         }
     }
 
-    // Map is ready to use
+    // Called when Google Map is ready to use
     override fun onMapReady(googleMap: GoogleMap) {
         map = googleMap
 
-        // Set default map location to New York City
+        // Start map centered on NYC as default
         val defaultLocation = LatLng(40.7128, -74.0060)
         map.moveCamera(CameraUpdateFactory.newLatLngZoom(defaultLocation, 10f))
 
-        // Detect camera movement and trigger search if necessary
+        // When user moves the map, search for banks in new area
         map.setOnCameraIdleListener {
             val newCenter = map.cameraPosition.target
+            // Only search if they moved far enough (saves API calls)
             if (lastSearchLatLng == null || distanceBetween(lastSearchLatLng!!, newCenter) > minMovementThresholdMeters) {
                 lastSearchLatLng = newCenter
                 performNearbySearch(newCenter.latitude, newCenter.longitude, currentSearchKeyword)
             }
         }
 
+        // Try to enable user location if we have permission
         checkLocationPermissionAndEnable()
     }
 
-    // Request location permission if not granted
+    // Request location permission if we don't have it
     private fun checkLocationPermissionAndEnable() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             != PackageManager.PERMISSION_GRANTED
@@ -181,13 +166,14 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
-    // Enable location tracking on the map
+    // Enable the blue dot showing user's current location
     private fun enableUserLocation() {
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION)
             == PackageManager.PERMISSION_GRANTED
         ) {
             map.isMyLocationEnabled = true
 
+            // Move camera to user's location
             fusedLocationClient.lastLocation.addOnSuccessListener { location ->
                 if (location != null) {
                     val userLatLng = LatLng(location.latitude, location.longitude)
@@ -199,7 +185,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
-    // Handle the result of the location permission dialog
+    // Handle the result of permission request
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
@@ -211,7 +197,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
-    // Search for a location using geocoding
+    // Search for a location by name/address (like "New York" or zip code)
     private fun searchLocation(location: String) {
         try {
             val geocoder = Geocoder(this, Locale.getDefault())
@@ -220,9 +206,13 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
             if (!addressList.isNullOrEmpty()) {
                 val address = addressList[0]
                 val latLng = LatLng(address.latitude, address.longitude)
+
+                // Clear previous markers and add new one for searched location
                 map.clear()
                 map.addMarker(MarkerOptions().position(latLng).title(location))
                 map.moveCamera(CameraUpdateFactory.newLatLngZoom(latLng, 14f))
+
+                // Search for banks near this location
                 performNearbySearch(latLng.latitude, latLng.longitude, currentSearchKeyword)
             } else {
                 Toast.makeText(this, "Location not found", Toast.LENGTH_SHORT).show()
@@ -232,15 +222,16 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         }
     }
 
-    // Search for nearby places using Google Places API
+    // Use Google Places API to find nearby banks
     private fun performNearbySearch(lat: Double, lng: Double, keyword: String) {
         val apiKey = getString(R.string.google_maps_key)
-        val radius = 2000 // in meters
+        val radius = 2000 // Search within 2km
         val url = "https://maps.googleapis.com/maps/api/place/nearbysearch/json?" +
                 "location=$lat,$lng&radius=$radius&keyword=$keyword&key=$apiKey"
 
         val request = Request.Builder().url(url).build()
 
+        // Make API call in background
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 runOnUiThread {
@@ -255,7 +246,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
                     val results = jsonObject.getJSONArray("results")
 
                     runOnUiThread {
+                        // Clear old markers
                         map.clear()
+
+                        // Add marker for each bank found
                         for (i in 0 until results.length()) {
                             val place = results.getJSONObject(i)
                             val name = place.optString("name")
@@ -263,9 +257,11 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
                             val placeLat = geometry.getDouble("lat")
                             val placeLng = geometry.getDouble("lng")
                             val position = LatLng(placeLat, placeLng)
+
                             map.addMarker(MarkerOptions().position(position).title(name))
                         }
 
+                        // Give user feedback
                         if (results.length() == 0) {
                             Toast.makeText(this@MapActivity, "No places found nearby", Toast.LENGTH_SHORT).show()
                         } else {
@@ -281,7 +277,7 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback, NavigationView.OnNa
         })
     }
 
-    // Calculate distance between two LatLng points
+    // Calculate distance between two map points to avoid too many API calls
     private fun distanceBetween(from: LatLng, to: LatLng): Float {
         val results = FloatArray(1)
         android.location.Location.distanceBetween(

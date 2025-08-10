@@ -11,6 +11,10 @@ import com.example.savehaven.data.TransactionType
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Adapter for the transaction history screen with filtering
+ * More detailed layout than dashboard adapter
+ */
 class TransactionHistoryAdapter(
     private var transactions: List<Transaction>,
     private val onTransactionClick: (Transaction) -> Unit
@@ -33,6 +37,7 @@ class TransactionHistoryAdapter(
     override fun onBindViewHolder(holder: TransactionViewHolder, position: Int) {
         val transaction = transactions[position]
 
+        // Basic transaction info
         holder.tvCategory.text = transaction.category
         holder.tvDescription.text = if (transaction.description.isNotEmpty()) {
             transaction.description
@@ -40,26 +45,26 @@ class TransactionHistoryAdapter(
             "No description"
         }
 
-        // Format date
+        // Full date format for history view
         val dateFormat = SimpleDateFormat("MMM dd, yyyy", Locale.getDefault())
         holder.tvDate.text = dateFormat.format(Date(transaction.date))
 
-        // Format amount
+        // Amount formatting
         val formattedAmount = String.format("%.2f", transaction.amount)
         holder.tvAmount.text = "$$formattedAmount"
 
-        // Transaction type and color
+        // Transaction type with color coding
         if (transaction.type == TransactionType.INCOME) {
             holder.tvType.text = "INCOME"
-            holder.tvType.setTextColor(0xFF4CAF50.toInt())
+            holder.tvType.setTextColor(0xFF4CAF50.toInt()) // Green
             holder.tvAmount.setTextColor(0xFF4CAF50.toInt())
         } else {
             holder.tvType.text = "EXPENSE"
-            holder.tvType.setTextColor(0xFFF44336.toInt())
+            holder.tvType.setTextColor(0xFFF44336.toInt()) // Red
             holder.tvAmount.setTextColor(0xFFF44336.toInt())
         }
 
-        // Click listener for editing
+        // Click to edit
         holder.itemView.setOnClickListener {
             onTransactionClick(transaction)
         }
@@ -67,6 +72,7 @@ class TransactionHistoryAdapter(
 
     override fun getItemCount(): Int = transactions.size
 
+    // Update transaction list (for filtering)
     fun updateTransactions(newTransactions: List<Transaction>) {
         transactions = newTransactions
         notifyDataSetChanged()

@@ -19,6 +19,10 @@ import com.google.android.material.navigation.NavigationView
 import java.text.SimpleDateFormat
 import java.util.*
 
+/**
+ * Edit existing transaction - loads transaction data and allows updates/deletion
+ * Similar to AddTransaction but with pre-populated fields and delete functionality
+ */
 class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigationItemSelectedListener {
     private lateinit var binding: ActivityEditTransactionBinding
     private lateinit var transactionRepository: TransactionRepository
@@ -34,6 +38,8 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         setContentView(binding.root)
 
         transactionRepository = TransactionRepository()
+
+        // Get the transaction ID from the intent
         transactionId = intent.getStringExtra("transaction_id") ?: ""
 
         if (transactionId.isEmpty()) {
@@ -45,7 +51,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         setupToolbar()
         setupNavigationDrawer()
         setupListeners()
-        loadTransaction()
+        loadTransaction() // Load the transaction data to edit
     }
 
     private fun setupToolbar() {
@@ -57,7 +63,6 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         drawerLayout = binding.drawerLayout
         val navigationView = binding.navView
 
-        // Setup drawer toggle
         val toggle = ActionBarDrawerToggle(
             this,
             drawerLayout,
@@ -68,16 +73,13 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        // Set navigation item selected listener
         navigationView.setNavigationItemSelectedListener(this)
-
-        // Don't set any selection for EditTransactionActivity (modal-like behavior)
-        // The setNavigationSelection extension function handles this automatically
+        // Edit screen acts like a modal, so don't highlight any nav item
         setNavigationSelection(this, navigationView)
     }
 
+    // Finish when navigating to main screens (edit is modal-like)
     override fun onNavigationItemSelected(item: MenuItem): Boolean {
-        // Use the universal NavigationHandler - finish on main navigation since this is a modal-like edit screen
         return NavigationHandler.handleNavigation(this, item, drawerLayout, shouldFinishOnMainNavigation = true)
     }
 
@@ -90,7 +92,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
     }
 
     private fun setupListeners() {
-        // Transaction type toggle
+        // Income/expense toggle changes available categories
         binding.toggleTransactionType.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked) {
                 isIncome = checkedId == R.id.btnIncome
@@ -108,12 +110,13 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
             updateTransaction()
         }
 
-        // Delete button
+        // Delete button with confirmation
         binding.btnDelete.setOnClickListener {
             showDeleteConfirmation()
         }
     }
 
+    // Load the transaction data from database
     private fun loadTransaction() {
         transactionRepository.getUserTransactions { transactions, error ->
             runOnUiThread {
@@ -123,6 +126,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
                     return@runOnUiThread
                 }
 
+                // Find our transaction in the list
                 originalTransaction = transactions.find { it.id == transactionId }
                 if (originalTransaction == null) {
                     Toast.makeText(this, "Transaction not found", Toast.LENGTH_SHORT).show()
@@ -130,13 +134,15 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
                     return@runOnUiThread
                 }
 
+                // Fill in all the form fields with existing data
                 populateFields(originalTransaction!!)
             }
         }
     }
 
+    // Fill form fields with existing transaction data
     private fun populateFields(transaction: Transaction) {
-        // Set amount
+        // Set amount (format to 2 decimal places)
         binding.etAmount.setText(String.format("%.2f", transaction.amount))
 
         // Set description
@@ -146,7 +152,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         selectedDate.timeInMillis = transaction.date
         updateDateDisplay()
 
-        // Set transaction type
+        // Set transaction type (income/expense)
         isIncome = transaction.type == TransactionType.INCOME
         if (isIncome) {
             binding.btnIncome.isChecked = true
@@ -154,11 +160,12 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
             binding.btnExpense.isChecked = true
         }
 
-        // Update category dropdown and set selected category
+        // Update categories and select the current one
         updateCategoryDropdown()
         binding.spinnerCategory.setText(transaction.category, false)
     }
 
+    // Update category dropdown based on income/expense selection
     private fun updateCategoryDropdown() {
         val categories = if (isIncome) {
             TransactionCategories.INCOME_CATEGORIES
@@ -188,8 +195,9 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         binding.etDate.setText(formatter.format(selectedDate.time))
     }
 
+    // Save the updated transaction
     private fun updateTransaction() {
-        // Validate inputs
+        // Validate all inputs (same as add transaction)
         val amountText = binding.etAmount.text?.toString()?.trim()
         val category = binding.spinnerCategory.text?.toString()?.trim()
         val description = binding.etDescription.text?.toString()?.trim() ?: ""
@@ -210,7 +218,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
             return
         }
 
-        // Create updated transaction
+        // Create updated transaction (keep original ID and user ID)
         val updatedTransaction = originalTransaction!!.copy(
             amount = amount,
             category = category,
@@ -219,10 +227,11 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
             type = if (isIncome) TransactionType.INCOME else TransactionType.EXPENSE
         )
 
-        // Save to database
+        // Show loading state
         binding.btnUpdate.isEnabled = false
         binding.btnUpdate.text = "Updating..."
 
+        // Save changes
         transactionRepository.updateTransaction(updatedTransaction) { success, error ->
             runOnUiThread {
                 binding.btnUpdate.isEnabled = true
@@ -238,6 +247,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
         }
     }
 
+    // Ask user to confirm deletion
     private fun showDeleteConfirmation() {
         AlertDialog.Builder(this)
             .setTitle("Delete Transaction")
@@ -249,6 +259,7 @@ class EditTransactionActivity : AppCompatActivity(), NavigationView.OnNavigation
             .show()
     }
 
+    // Actually delete the transaction
     private fun deleteTransaction() {
         binding.btnDelete.isEnabled = false
         binding.btnDelete.text = "Deleting..."

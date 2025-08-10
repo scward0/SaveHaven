@@ -39,22 +39,17 @@ class TransactionRepository {
 
     fun getUserTransactions(callback: (List<Transaction>, String?) -> Unit) {
         val userId = getCurrentUserId()
-        Log.d(TAG, "getUserTransactions called for userId: $userId")
 
         if (userId == null) {
-            Log.w(TAG, "User not authenticated")
             callback(emptyList(), "User not authenticated")
             return
         }
-
-        Log.d(TAG, "Making Firestore query for userId: $userId")
 
 
         db.collection("transactions")
             .whereEqualTo("userId", userId)
             .get()
             .addOnSuccessListener { documents ->
-                Log.d(TAG, "Firestore query successful. Document count: ${documents.size()}")
 
                 val transactions = documents.mapNotNull { doc ->
                     try {
@@ -69,11 +64,9 @@ class TransactionRepository {
                 // Sort by date in descending order (most recent first)
                 val sortedTransactions = transactions.sortedByDescending { it.date }
 
-                Log.d(TAG, "Successfully parsed ${sortedTransactions.size} transactions")
                 callback(sortedTransactions, null)
             }
             .addOnFailureListener { exception ->
-                Log.e(TAG, "Firestore query failed", exception)
                 callback(emptyList(), exception.message)
             }
     }

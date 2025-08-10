@@ -83,7 +83,6 @@ class AuthRepository {
     fun getCurrentUser(): User? {
         val firebaseUser = auth.currentUser
         return if (firebaseUser != null) {
-            // Note: This returns a basic User object. In a real app, you'd fetch from Firestore
             User(uid = firebaseUser.uid, email = firebaseUser.email ?: "")
         } else {
             null

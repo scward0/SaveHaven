@@ -274,9 +274,6 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
             startActivity(Intent(this, TransactionHistoryActivity::class.java))
         }
 
-        // Remove the old logout button click listener since it's now handled by NavigationHandler
-        // binding.btnLogout.setOnClickListener { logout() }
-
         binding.cardIncome.setOnClickListener {
             startActivity(Intent(this, IncomeActivity::class.java))
         }
@@ -304,5 +301,4 @@ class DashboardActivity : AppCompatActivity(), NavigationView.OnNavigationItemSe
         finish()
     }
 
-    // Remove the old logout() method since it's now handled by NavigationHandler
 }

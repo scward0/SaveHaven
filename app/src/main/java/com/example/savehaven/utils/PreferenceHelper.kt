@@ -18,8 +18,7 @@ class PreferenceHelper(context: Context) {
         private const val KEY_IS_LOGGED_IN = "is_logged_in"
     }
 
-    // ========== YOUR EXISTING METHODS ==========
-    // Boolean getter
+
     fun getBoolean(key: String, default: Boolean): Boolean {
         return sharedPreferences.getBoolean(key, default)
     }
@@ -54,25 +53,19 @@ class PreferenceHelper(context: Context) {
         val editor = prefs.edit()
         editor.clear() // This clears all stored preferences
         editor.apply()
-        Log.d(TAG, "User session cleared")
     }
 
-    // ========== ADDITIONAL METHODS FOR DASHBOARD ==========
 
     /**
      * Save user session information (added for dashboard functionality)
      */
     fun saveUserSession(userId: String, email: String) {
-        Log.d(TAG, "Saving user session - UserId: $userId, Email: $email")
-
         prefs.edit().apply {
             putString(KEY_USER_ID, userId)
             putString(Constants.PREF_USER_EMAIL, email)
             putBoolean(KEY_IS_LOGGED_IN, true)
             apply()
         }
-
-        Log.d(TAG, "User session saved successfully")
     }
 
     /**
@@ -80,7 +73,6 @@ class PreferenceHelper(context: Context) {
      */
     fun getCurrentUserId(): String? {
         val userId = prefs.getString(KEY_USER_ID, null)
-        Log.d(TAG, "getCurrentUserId returning: $userId")
         return userId
     }
 
@@ -89,7 +81,6 @@ class PreferenceHelper(context: Context) {
      */
     fun getCurrentUserEmail(): String? {
         val email = prefs.getString(Constants.PREF_USER_EMAIL, null)
-        Log.d(TAG, "getCurrentUserEmail returning: $email")
         return email
     }
 
@@ -100,8 +91,6 @@ class PreferenceHelper(context: Context) {
         val isLoggedIn = prefs.getBoolean(KEY_IS_LOGGED_IN, false)
         val userId = getCurrentUserId()
         val result = isLoggedIn && !userId.isNullOrEmpty()
-
-        Log.d(TAG, "isUserLoggedIn - IsLoggedIn flag: $isLoggedIn, UserId exists: ${!userId.isNullOrEmpty()}, Result: $result")
         return result
     }
 
@@ -109,14 +98,12 @@ class PreferenceHelper(context: Context) {
      * Update user email
      */
     fun updateUserEmail(email: String) {
-        Log.d(TAG, "Updating user email: $email")
 
         prefs.edit().apply {
             putString(Constants.PREF_USER_EMAIL, email)
             apply()
         }
 
-        Log.d(TAG, "User email updated successfully")
     }
 
     /**
@@ -130,8 +117,6 @@ class PreferenceHelper(context: Context) {
             "rememberedEmail" to getRememberedEmail(),
             "rememberMeEnabled" to isRememberMeEnabled()
         )
-
-        Log.d(TAG, "Current user info: $userInfo")
         return userInfo
     }
 }
